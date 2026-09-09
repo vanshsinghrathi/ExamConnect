@@ -1,0 +1,382 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.educationRecord",
+    "label": "Create table \"educationRecord\"",
+    "summary": "Creates table \"educationRecord\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "educationRecord"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"educationRecord\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"educationRecord\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"educationRecord\"",
+        "sql": "CREATE TABLE \"public\".\"educationRecord\" (\n  \"boardOrUniversity\" text,\n  \"courseName\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"institutionName\" text,\n  \"passingYear\" int4,\n  \"percentage\" float8,\n  \"qualification\" text NOT NULL,\n  \"stream\" text,\n  \"studentProfileId\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"educationRecord\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"educationRecord\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.exam",
+    "label": "Create table \"exam\"",
+    "summary": "Creates table \"exam\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "exam"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"exam\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"exam\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"exam\"",
+        "sql": "CREATE TABLE \"public\".\"exam\" (\n  \"conductingBody\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"examType\" text,\n  \"id\" SERIAL NOT NULL,\n  \"name\" text NOT NULL,\n  \"officialWebsite\" text,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"exam\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"exam\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.studentProfile",
+    "label": "Create table \"studentProfile\"",
+    "summary": "Creates table \"studentProfile\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "studentProfile"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"studentProfile\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"studentProfile\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"studentProfile\"",
+        "sql": "CREATE TABLE \"public\".\"studentProfile\" (\n  \"category\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"dateOfBirth\" timestamptz,\n  \"firstName\" text NOT NULL,\n  \"gender\" text,\n  \"id\" SERIAL NOT NULL,\n  \"lastName\" text,\n  \"state\" text,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"studentProfile\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"studentProfile\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.user",
+    "label": "Create table \"user\"",
+    "summary": "Creates table \"user\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"user\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"user\"",
+        "sql": "CREATE TABLE \"public\".\"user\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"email\" text NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"user\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.studentProfile.studentProfile_userId_key",
+    "label": "Add unique constraint on \"studentProfile\" (userId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "studentProfile_userId_key",
+        "table": "studentProfile"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"studentProfile_userId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "studentProfile_userId_key",
+          "public",
+          "\"public\".\"studentProfile\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"studentProfile_userId_key\"",
+        "sql": "ALTER TABLE \"public\".\"studentProfile\" ADD CONSTRAINT \"studentProfile_userId_key\" UNIQUE (\"userId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"studentProfile_userId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "studentProfile_userId_key",
+          "public",
+          "\"public\".\"studentProfile\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.user.user_email_key",
+    "label": "Add unique constraint on \"user\" (email)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "user_email_key",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"user_email_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_email_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"user_email_key\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD CONSTRAINT \"user_email_key\" UNIQUE (\"email\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"user_email_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_email_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.educationRecord.educationRecord_studentProfileId_idx_df067eb1",
+    "label": "Create index \"educationRecord_studentProfileId_idx_df067eb1\" on \"educationRecord\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "educationRecord_studentProfileId_idx_df067eb1",
+        "table": "educationRecord"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"educationRecord_studentProfileId_idx_df067eb1\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"educationRecord_studentProfileId_idx_df067eb1\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"educationRecord_studentProfileId_idx_df067eb1\"",
+        "sql": "CREATE INDEX \"educationRecord_studentProfileId_idx_df067eb1\" ON \"public\".\"educationRecord\" (\"studentProfileId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"educationRecord_studentProfileId_idx_df067eb1\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"educationRecord_studentProfileId_idx_df067eb1\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.educationRecord.educationRecord_studentProfileId_fkey",
+    "label": "Add foreign key \"educationRecord_studentProfileId_fkey\" on \"educationRecord\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "educationRecord_studentProfileId_fkey",
+        "table": "educationRecord"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"educationRecord_studentProfileId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "educationRecord_studentProfileId_fkey",
+          "public",
+          "\"public\".\"educationRecord\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"educationRecord_studentProfileId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"educationRecord\"\nADD CONSTRAINT \"educationRecord_studentProfileId_fkey\"\nFOREIGN KEY (\"studentProfileId\")\nREFERENCES \"public\".\"studentProfile\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"educationRecord_studentProfileId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "educationRecord_studentProfileId_fkey",
+          "public",
+          "\"public\".\"educationRecord\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.studentProfile.studentProfile_userId_fkey",
+    "label": "Add foreign key \"studentProfile_userId_fkey\" on \"studentProfile\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "studentProfile_userId_fkey",
+        "table": "studentProfile"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"studentProfile_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "studentProfile_userId_fkey",
+          "public",
+          "\"public\".\"studentProfile\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"studentProfile_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"studentProfile\"\nADD CONSTRAINT \"studentProfile_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"studentProfile_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "studentProfile_userId_fkey",
+          "public",
+          "\"public\".\"studentProfile\""
+        ]
+      }
+    ]
+  }
+]

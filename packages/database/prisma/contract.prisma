@@ -1,0 +1,51 @@
+model User {
+  id             Int             @id @default(autoincrement())
+  email          String          @unique
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime
+
+  studentProfile StudentProfile?
+}
+
+model StudentProfile {
+  id               Int               @id @default(autoincrement())
+  userId           Int               @unique
+  firstName        String
+  lastName         String?
+  dateOfBirth      DateTime?
+  gender           String?
+  state            String?
+  category         String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime
+
+  user             User              @relation(fields:[userId], references:[id])
+  educationRecords EducationRecord[]
+}
+
+model EducationRecord {
+  id                Int            @id @default(autoincrement())
+  studentProfileId  Int
+  qualification     String
+  courseName        String?
+  institutionName   String?
+  boardOrUniversity String?
+  passingYear       Int?
+  percentage        Float?
+  stream            String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime
+
+  studentProfile    StudentProfile @relation(fields:[studentProfileId], references:[id])
+}
+
+model Exam {
+  id              Int      @id @default(autoincrement())
+  name            String
+  conductingBody  String
+  examType        String?
+  description     String?
+  officialWebsite String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime
+}

@@ -1,0 +1,11 @@
+﻿{
+    "name":  "examconnect",
+    "private":  true,
+    "version":  "0.1.0",
+    "scripts":  {
+                    "dev":  "pnpm --parallel --filter \u0027./apps/*\u0027 dev",
+                    "build":  "pnpm --recursive build",
+                    "lint":  "pnpm --recursive lint",
+                    "typecheck":  "pnpm -r typecheck"
+                }
+}
