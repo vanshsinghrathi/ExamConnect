@@ -9,6 +9,7 @@ import { meRoute } from "./auth/me.js";
 import { protectedRoute } from "./auth/protected.js";
 
 import { studentRoute } from "./student.js";
+import { eligibilityRoute } from "./eligibility/eligibility.js";
 import { examRoute } from "./exams.js";
 import { adminExamRoute } from "./admin-exams.js";
 
@@ -51,6 +52,9 @@ await meRoute(app);
 
 // Student routes.
 await studentRoute(app);
+
+// Eligibility routes.
+await eligibilityRoute(app);
 
 // Exam read routes.
 await examRoute(app);
