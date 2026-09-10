@@ -4,9 +4,10 @@ import {
 
 const student = {
   profile: {
-    category: "General",
-    state: "Delhi",
-  },
+  category: "General",
+  state: "Delhi",
+  dateOfBirth: null,
+},
 
   education: [
     {
