@@ -7,8 +7,9 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime
 
-  studentProfile StudentProfile?
-  sessions       Session[]
+  studentProfile       StudentProfile?
+  sessions             Session[]
+  studentNotifications StudentNotification[]
 }
 
 model Session {
@@ -24,6 +25,7 @@ model Session {
   @@index([userId])
   @@index([expiresAt])
 }
+
 model StudentProfile {
   id               Int               @id @default(autoincrement())
   userId           Int               @unique
@@ -66,9 +68,9 @@ model Exam {
   createdAt       DateTime @default(now())
   updatedAt       DateTime
 
-  posts                 Post[]
-  eligibilityRules      EligibilityRule[]
-  applicationDeadlines  ApplicationDeadline[]
+  posts                Post[]
+  eligibilityRules     EligibilityRule[]
+  applicationDeadlines ApplicationDeadline[]
 }
 
 model Post {
@@ -147,18 +149,39 @@ model EligibilityRuleVersion {
 }
 
 model NotificationSource {
-  id                     Int      @id @default(autoincrement())
-  organization           String
-  notificationTitle      String
-  notificationDate       DateTime?
-  officialUrl             String
-  notificationIdentifier  String?
-  dateImported             DateTime @default(now())
-  lastVerifiedAt           DateTime?
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime
+  id                    Int      @id @default(autoincrement())
+  organization          String
+  notificationTitle     String
+  notificationDate      DateTime?
+  officialUrl           String
+  notificationIdentifier String?
+  dateImported          DateTime @default(now())
+  lastVerifiedAt        DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime
 
   eligibilityRuleVersions EligibilityRuleVersion[]
 
   @@index([organization])
+}
+
+model StudentNotification {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  type       String
+  title      String
+  message    String
+  examId     Int?
+  postId     Int?
+  deadlineId Int?
+  isRead     Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  readAt     DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([deadlineId])
+  @@index([createdAt])
 }
