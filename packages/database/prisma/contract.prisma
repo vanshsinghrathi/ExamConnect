@@ -1,12 +1,29 @@
 model User {
-  id             Int             @id @default(autoincrement())
-  email          String          @unique
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String?
+  role         String   @default("STUDENT")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
 
   studentProfile StudentProfile?
+  sessions       Session[]
 }
 
+model Session {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([expiresAt])
+}
 model StudentProfile {
   id               Int               @id @default(autoincrement())
   userId           Int               @unique
@@ -19,7 +36,7 @@ model StudentProfile {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime
 
-  user             User              @relation(fields:[userId], references:[id])
+  user             User              @relation(fields: [userId], references: [id])
   educationRecords EducationRecord[]
 }
 
@@ -36,7 +53,7 @@ model EducationRecord {
   createdAt         DateTime       @default(now())
   updatedAt         DateTime
 
-  studentProfile    StudentProfile @relation(fields:[studentProfileId], references:[id])
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id])
 }
 
 model Exam {
@@ -49,9 +66,9 @@ model Exam {
   createdAt       DateTime @default(now())
   updatedAt       DateTime
 
-  posts             Post[]
-  eligibilityRules  EligibilityRule[]
-  applicationDeadlines ApplicationDeadline[]
+  posts                 Post[]
+  eligibilityRules      EligibilityRule[]
+  applicationDeadlines  ApplicationDeadline[]
 }
 
 model Post {
@@ -63,12 +80,13 @@ model Post {
   createdAt   DateTime @default(now())
   updatedAt   DateTime
 
-  exam                  Exam                  @relation(fields: [examId], references: [id])
-  eligibilityRules      EligibilityRule[]
-  applicationDeadlines  ApplicationDeadline[]
+  exam                 Exam                  @relation(fields: [examId], references: [id])
+  eligibilityRules     EligibilityRule[]
+  applicationDeadlines ApplicationDeadline[]
 
   @@index([examId])
 }
+
 model EligibilityRule {
   id          Int      @id @default(autoincrement())
   examId      Int
@@ -79,24 +97,25 @@ model EligibilityRule {
   createdAt   DateTime @default(now())
   updatedAt   DateTime
 
-  exam     Exam                     @relation(fields: [examId], references: [id])
-  post     Post?                    @relation(fields: [postId], references: [id])
+  exam     Exam                  @relation(fields: [examId], references: [id])
+  post     Post?                 @relation(fields: [postId], references: [id])
   versions EligibilityRuleVersion[]
 
   @@index([examId])
   @@index([postId])
 }
+
 model ApplicationDeadline {
-  id              Int      @id @default(autoincrement())
-  examId          Int
-  postId          Int?
-  applicationUrl  String?
-  status          String
+  id               Int      @id @default(autoincrement())
+  examId           Int
+  postId           Int?
+  applicationUrl   String?
+  status           String
   applicationStart DateTime?
   applicationEnd   DateTime?
-  examDate        DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime
+  examDate         DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime
 
   exam Exam  @relation(fields: [examId], references: [id])
   post Post? @relation(fields: [postId], references: [id])
@@ -105,6 +124,7 @@ model ApplicationDeadline {
   @@index([postId])
   @@index([applicationEnd])
 }
+
 model EligibilityRuleVersion {
   id                   Int      @id @default(autoincrement())
   eligibilityRuleId    Int
@@ -120,23 +140,23 @@ model EligibilityRuleVersion {
   updatedAt            DateTime
 
   eligibilityRule    EligibilityRule     @relation(fields: [eligibilityRuleId], references: [id])
-  notificationSource NotificationSource?  @relation(fields: [notificationSourceId], references: [id])
+  notificationSource NotificationSource? @relation(fields: [notificationSourceId], references: [id])
 
   @@index([eligibilityRuleId])
   @@index([notificationSourceId])
 }
 
 model NotificationSource {
-  id                    Int      @id @default(autoincrement())
-  organization          String
-  notificationTitle     String
-  notificationDate      DateTime?
-  officialUrl            String
-  notificationIdentifier String?
-  dateImported          DateTime @default(now())
-  lastVerifiedAt        DateTime?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime
+  id                     Int      @id @default(autoincrement())
+  organization           String
+  notificationTitle      String
+  notificationDate       DateTime?
+  officialUrl             String
+  notificationIdentifier  String?
+  dateImported             DateTime @default(now())
+  lastVerifiedAt           DateTime?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime
 
   eligibilityRuleVersions EligibilityRuleVersion[]
 
