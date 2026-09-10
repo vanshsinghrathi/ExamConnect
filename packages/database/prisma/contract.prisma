@@ -49,12 +49,30 @@ model Exam {
   createdAt       DateTime @default(now())
   updatedAt       DateTime
 
-  eligibilityRules EligibilityRule[]
+  posts             Post[]
+  eligibilityRules  EligibilityRule[]
+  applicationDeadlines ApplicationDeadline[]
 }
 
+model Post {
+  id          Int      @id @default(autoincrement())
+  examId      Int
+  name        String
+  code        String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+
+  exam                  Exam                  @relation(fields: [examId], references: [id])
+  eligibilityRules      EligibilityRule[]
+  applicationDeadlines  ApplicationDeadline[]
+
+  @@index([examId])
+}
 model EligibilityRule {
   id          Int      @id @default(autoincrement())
   examId      Int
+  postId      Int?
   ruleType    String
   name        String
   description String?
@@ -62,11 +80,31 @@ model EligibilityRule {
   updatedAt   DateTime
 
   exam     Exam                     @relation(fields: [examId], references: [id])
+  post     Post?                    @relation(fields: [postId], references: [id])
   versions EligibilityRuleVersion[]
 
   @@index([examId])
+  @@index([postId])
 }
+model ApplicationDeadline {
+  id              Int      @id @default(autoincrement())
+  examId          Int
+  postId          Int?
+  applicationUrl  String?
+  status          String
+  applicationStart DateTime?
+  applicationEnd   DateTime?
+  examDate        DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime
 
+  exam Exam  @relation(fields: [examId], references: [id])
+  post Post? @relation(fields: [postId], references: [id])
+
+  @@index([examId])
+  @@index([postId])
+  @@index([applicationEnd])
+}
 model EligibilityRuleVersion {
   id                   Int      @id @default(autoincrement())
   eligibilityRuleId    Int

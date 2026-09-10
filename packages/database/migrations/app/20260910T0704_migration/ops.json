@@ -1,0 +1,485 @@
+[
+  {
+    "id": "table.applicationDeadline",
+    "label": "Create table \"applicationDeadline\"",
+    "summary": "Creates table \"applicationDeadline\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "applicationDeadline"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"applicationDeadline\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"applicationDeadline\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"applicationDeadline\"",
+        "sql": "CREATE TABLE \"public\".\"applicationDeadline\" (\n  \"applicationEnd\" timestamptz,\n  \"applicationStart\" timestamptz,\n  \"applicationUrl\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"examDate\" timestamptz,\n  \"examId\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"postId\" int4,\n  \"status\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"applicationDeadline\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"applicationDeadline\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.post",
+    "label": "Create table \"post\"",
+    "summary": "Creates table \"post\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "post"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"post\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"post\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"post\"",
+        "sql": "CREATE TABLE \"public\".\"post\" (\n  \"code\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"examId\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"name\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"post\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"post\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.eligibilityRule.postId",
+    "label": "Add column \"postId\" to \"eligibilityRule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "postId",
+        "table": "eligibilityRule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"postId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "eligibilityRule",
+          "postId"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"postId\"",
+        "sql": "ALTER TABLE \"public\".\"eligibilityRule\" ADD COLUMN \"postId\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"postId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "eligibilityRule",
+          "postId"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.applicationDeadline.applicationDeadline_applicationEnd_idx_8a3a84c5",
+    "label": "Create index \"applicationDeadline_applicationEnd_idx_8a3a84c5\" on \"applicationDeadline\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "applicationDeadline_applicationEnd_idx_8a3a84c5",
+        "table": "applicationDeadline"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"applicationDeadline_applicationEnd_idx_8a3a84c5\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"applicationDeadline_applicationEnd_idx_8a3a84c5\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"applicationDeadline_applicationEnd_idx_8a3a84c5\"",
+        "sql": "CREATE INDEX \"applicationDeadline_applicationEnd_idx_8a3a84c5\" ON \"public\".\"applicationDeadline\" (\"applicationEnd\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"applicationDeadline_applicationEnd_idx_8a3a84c5\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"applicationDeadline_applicationEnd_idx_8a3a84c5\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.applicationDeadline.applicationDeadline_examId_idx_a57bdadd",
+    "label": "Create index \"applicationDeadline_examId_idx_a57bdadd\" on \"applicationDeadline\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "applicationDeadline_examId_idx_a57bdadd",
+        "table": "applicationDeadline"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"applicationDeadline_examId_idx_a57bdadd\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"applicationDeadline_examId_idx_a57bdadd\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"applicationDeadline_examId_idx_a57bdadd\"",
+        "sql": "CREATE INDEX \"applicationDeadline_examId_idx_a57bdadd\" ON \"public\".\"applicationDeadline\" (\"examId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"applicationDeadline_examId_idx_a57bdadd\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"applicationDeadline_examId_idx_a57bdadd\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.applicationDeadline.applicationDeadline_postId_idx_a7a72715",
+    "label": "Create index \"applicationDeadline_postId_idx_a7a72715\" on \"applicationDeadline\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "applicationDeadline_postId_idx_a7a72715",
+        "table": "applicationDeadline"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"applicationDeadline_postId_idx_a7a72715\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"applicationDeadline_postId_idx_a7a72715\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"applicationDeadline_postId_idx_a7a72715\"",
+        "sql": "CREATE INDEX \"applicationDeadline_postId_idx_a7a72715\" ON \"public\".\"applicationDeadline\" (\"postId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"applicationDeadline_postId_idx_a7a72715\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"applicationDeadline_postId_idx_a7a72715\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.eligibilityRule.eligibilityRule_postId_idx_a7a72715",
+    "label": "Create index \"eligibilityRule_postId_idx_a7a72715\" on \"eligibilityRule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "eligibilityRule_postId_idx_a7a72715",
+        "table": "eligibilityRule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"eligibilityRule_postId_idx_a7a72715\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"eligibilityRule_postId_idx_a7a72715\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"eligibilityRule_postId_idx_a7a72715\"",
+        "sql": "CREATE INDEX \"eligibilityRule_postId_idx_a7a72715\" ON \"public\".\"eligibilityRule\" (\"postId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"eligibilityRule_postId_idx_a7a72715\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"eligibilityRule_postId_idx_a7a72715\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.post.post_examId_idx_a57bdadd",
+    "label": "Create index \"post_examId_idx_a57bdadd\" on \"post\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "post_examId_idx_a57bdadd",
+        "table": "post"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"post_examId_idx_a57bdadd\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"post_examId_idx_a57bdadd\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"post_examId_idx_a57bdadd\"",
+        "sql": "CREATE INDEX \"post_examId_idx_a57bdadd\" ON \"public\".\"post\" (\"examId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"post_examId_idx_a57bdadd\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"post_examId_idx_a57bdadd\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.applicationDeadline.applicationDeadline_examId_fkey",
+    "label": "Add foreign key \"applicationDeadline_examId_fkey\" on \"applicationDeadline\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "applicationDeadline_examId_fkey",
+        "table": "applicationDeadline"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"applicationDeadline_examId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "applicationDeadline_examId_fkey",
+          "public",
+          "\"public\".\"applicationDeadline\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"applicationDeadline_examId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"applicationDeadline\"\nADD CONSTRAINT \"applicationDeadline_examId_fkey\"\nFOREIGN KEY (\"examId\")\nREFERENCES \"public\".\"exam\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"applicationDeadline_examId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "applicationDeadline_examId_fkey",
+          "public",
+          "\"public\".\"applicationDeadline\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.applicationDeadline.applicationDeadline_postId_fkey",
+    "label": "Add foreign key \"applicationDeadline_postId_fkey\" on \"applicationDeadline\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "applicationDeadline_postId_fkey",
+        "table": "applicationDeadline"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"applicationDeadline_postId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "applicationDeadline_postId_fkey",
+          "public",
+          "\"public\".\"applicationDeadline\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"applicationDeadline_postId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"applicationDeadline\"\nADD CONSTRAINT \"applicationDeadline_postId_fkey\"\nFOREIGN KEY (\"postId\")\nREFERENCES \"public\".\"post\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"applicationDeadline_postId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "applicationDeadline_postId_fkey",
+          "public",
+          "\"public\".\"applicationDeadline\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.post.post_examId_fkey",
+    "label": "Add foreign key \"post_examId_fkey\" on \"post\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "post_examId_fkey",
+        "table": "post"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"post_examId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "post_examId_fkey",
+          "public",
+          "\"public\".\"post\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"post_examId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"post\"\nADD CONSTRAINT \"post_examId_fkey\"\nFOREIGN KEY (\"examId\")\nREFERENCES \"public\".\"exam\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"post_examId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "post_examId_fkey",
+          "public",
+          "\"public\".\"post\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.eligibilityRule.eligibilityRule_postId_fkey",
+    "label": "Add foreign key \"eligibilityRule_postId_fkey\" on \"eligibilityRule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "eligibilityRule_postId_fkey",
+        "table": "eligibilityRule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"eligibilityRule_postId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "eligibilityRule_postId_fkey",
+          "public",
+          "\"public\".\"eligibilityRule\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"eligibilityRule_postId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"eligibilityRule\"\nADD CONSTRAINT \"eligibilityRule_postId_fkey\"\nFOREIGN KEY (\"postId\")\nREFERENCES \"public\".\"post\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"eligibilityRule_postId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "eligibilityRule_postId_fkey",
+          "public",
+          "\"public\".\"eligibilityRule\""
+        ]
+      }
+    ]
+  }
+]

@@ -4,6 +4,10 @@
   "target": "postgres",
   "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
   "roots": {
+    "applicationDeadline": {
+      "model": "ApplicationDeadline",
+      "namespace": "public"
+    },
     "educationRecord": {
       "model": "EducationRecord",
       "namespace": "public"
@@ -24,6 +28,10 @@
       "model": "NotificationSource",
       "namespace": "public"
     },
+    "post": {
+      "model": "Post",
+      "namespace": "public"
+    },
     "studentProfile": {
       "model": "StudentProfile",
       "namespace": "public"
@@ -37,6 +45,148 @@
     "namespaces": {
       "public": {
         "models": {
+          "ApplicationDeadline": {
+            "fields": {
+              "applicationEnd": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "applicationStart": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "applicationUrl": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "examDate": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "examId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "postId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "exam": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "examId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Exam",
+                  "namespace": "public"
+                }
+              },
+              "post": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "postId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Post",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "applicationEnd": {
+                  "column": "applicationEnd"
+                },
+                "applicationStart": {
+                  "column": "applicationStart"
+                },
+                "applicationUrl": {
+                  "column": "applicationUrl"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "examDate": {
+                  "column": "examDate"
+                },
+                "examId": {
+                  "column": "examId"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "postId": {
+                  "column": "postId"
+                },
+                "status": {
+                  "column": "status"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "applicationDeadline"
+            }
+          },
           "EducationRecord": {
             "fields": {
               "boardOrUniversity": {
@@ -211,6 +361,13 @@
                   "kind": "scalar"
                 }
               },
+              "postId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "ruleType": {
                 "nullable": false,
                 "type": {
@@ -239,6 +396,21 @@
                 },
                 "to": {
                   "model": "Exam",
+                  "namespace": "public"
+                }
+              },
+              "post": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "postId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Post",
                   "namespace": "public"
                 }
               },
@@ -274,6 +446,9 @@
                 },
                 "name": {
                   "column": "name"
+                },
+                "postId": {
+                  "column": "postId"
                 },
                 "ruleType": {
                   "column": "ruleType"
@@ -508,6 +683,21 @@
               }
             },
             "relations": {
+              "applicationDeadlines": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "examId"
+                  ]
+                },
+                "to": {
+                  "model": "ApplicationDeadline",
+                  "namespace": "public"
+                }
+              },
               "eligibilityRules": {
                 "cardinality": "1:N",
                 "on": {
@@ -520,6 +710,21 @@
                 },
                 "to": {
                   "model": "EligibilityRule",
+                  "namespace": "public"
+                }
+              },
+              "posts": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "examId"
+                  ]
+                },
+                "to": {
+                  "model": "Post",
                   "namespace": "public"
                 }
               }
@@ -680,6 +885,133 @@
               },
               "namespaceId": "public",
               "table": "notificationSource"
+            }
+          },
+          "Post": {
+            "fields": {
+              "code": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "description": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "examId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "applicationDeadlines": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "postId"
+                  ]
+                },
+                "to": {
+                  "model": "ApplicationDeadline",
+                  "namespace": "public"
+                }
+              },
+              "eligibilityRules": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "postId"
+                  ]
+                },
+                "to": {
+                  "model": "EligibilityRule",
+                  "namespace": "public"
+                }
+              },
+              "exam": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "examId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Exam",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "code": {
+                  "column": "code"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "description": {
+                  "column": "description"
+                },
+                "examId": {
+                  "column": "examId"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "name": {
+                  "column": "name"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "post"
             }
           },
           "StudentProfile": {
@@ -900,6 +1232,134 @@
       "public": {
         "entries": {
           "table": {
+            "applicationDeadline": {
+              "columns": {
+                "applicationEnd": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "applicationStart": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "applicationUrl": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "examDate": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "examId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "postId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "examId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "applicationDeadline"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "exam"
+                  }
+                },
+                {
+                  "source": {
+                    "columns": [
+                      "postId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "applicationDeadline"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "post"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "applicationEnd"
+                  ],
+                  "name": "applicationDeadline_applicationEnd_idx_8a3a84c5",
+                  "prefix": "applicationDeadline_applicationEnd_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "examId"
+                  ],
+                  "name": "applicationDeadline_examId_idx_a57bdadd",
+                  "prefix": "applicationDeadline_examId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "postId"
+                  ],
+                  "name": "applicationDeadline_postId_idx_a7a72715",
+                  "prefix": "applicationDeadline_postId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "educationRecord": {
               "columns": {
                 "boardOrUniversity": {
@@ -1036,6 +1496,11 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "postId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
                 "ruleType": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -1063,6 +1528,22 @@
                     "namespaceId": "public",
                     "tableName": "exam"
                   }
+                },
+                {
+                  "source": {
+                    "columns": [
+                      "postId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "eligibilityRule"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "post"
+                  }
                 }
               ],
               "indexes": [
@@ -1072,6 +1553,14 @@
                   ],
                   "name": "eligibilityRule_examId_idx_a57bdadd",
                   "prefix": "eligibilityRule_examId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "postId"
+                  ],
+                  "name": "eligibilityRule_postId_idx_a7a72715",
+                  "prefix": "eligibilityRule_postId_idx",
                   "unique": false
                 }
               ],
@@ -1355,6 +1844,87 @@
               },
               "uniques": []
             },
+            "post": {
+              "columns": {
+                "code": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "description": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "examId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "name": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "examId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "post"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "exam"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "examId"
+                  ],
+                  "name": "post_examId_idx_a57bdadd",
+                  "prefix": "post_examId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "studentProfile": {
               "columns": {
                 "category": {
@@ -1500,7 +2070,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "6b7e63560eb040a8d865569e528910b9e462b9ad4ae0522a17e31b2dda984907"
+    "storageHash": "b45ce5b045b591fc279bd48d5135507a65cf9316b691a4c471255156c42d6308"
   },
   "capabilities": {
     "postgres": {
