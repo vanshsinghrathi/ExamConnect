@@ -1,39 +1,22 @@
 import type { FastifyInstance } from "fastify";
-import "@fastify/cookie";
-
-import {
-  getSessionUser,
-  sessionCookieName,
-} from "./session.js";
+import { requireAuth } from "./guards.js";
 
 export async function meRoute(app: FastifyInstance) {
-  app.get("/auth/me", async (request, reply) => {
-    const token = request.cookies[sessionCookieName];
+  app.get(
+    "/auth/me",
+    {
+      preHandler: requireAuth,
+    },
+    async (request, reply) => {
+      const user = request.authUser!;
 
-    if (!token) {
-      return reply.code(401).send({
-        error: "UNAUTHENTICATED",
-        message: "Authentication required.",
+      return reply.send({
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        },
       });
-    }
-
-    const result = await getSessionUser(token);
-
-    if (!result) {
-      return reply.code(401).send({
-        error: "UNAUTHENTICATED",
-        message: "Authentication required.",
-      });
-    }
-
-    const { user } = result;
-
-    return reply.send({
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  });
+    },
+  );
 }

@@ -6,6 +6,7 @@ import { registerRoute } from "./auth/register.js";
 import { loginRoute } from "./auth/login.js";
 import { logoutRoute } from "./auth/logout.js";
 import { meRoute } from "./auth/me.js";
+import { protectedRoute } from "./auth/protected.js";
 
 const app = Fastify({
   logger: false,
@@ -14,10 +15,13 @@ const app = Fastify({
 const port = Number(process.env.PORT ?? 4000);
 const host = process.env.HOST ?? "127.0.0.1";
 
+// Connect to PostgreSQL once when the API starts.
 await db.connect();
 
+// Enable cookie parsing and cookie management.
 await app.register(cookie);
 
+// Basic API health check.
 app.get("/health", async () => {
   return {
     status: "ok",
@@ -25,6 +29,7 @@ app.get("/health", async () => {
   };
 });
 
+// Database health check.
 app.get("/health/db", async () => {
   await db.orm.public.User.all();
 
@@ -34,11 +39,16 @@ app.get("/health/db", async () => {
   };
 });
 
+// Authentication routes.
 await registerRoute(app);
 await loginRoute(app);
 await logoutRoute(app);
 await meRoute(app);
 
+// Protected student/admin routes.
+await protectedRoute(app);
+
+// Graceful shutdown.
 const shutdown = async () => {
   await db.close();
   await app.close();
@@ -48,6 +58,7 @@ const shutdown = async () => {
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
+// Start the API server.
 await app.listen({
   port,
   host,
