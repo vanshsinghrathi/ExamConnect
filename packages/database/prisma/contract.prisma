@@ -68,19 +68,39 @@ model EligibilityRule {
 }
 
 model EligibilityRuleVersion {
-  id               Int      @id @default(autoincrement())
-  eligibilityRuleId Int
-  versionNumber    Int
-  status           String
-  conditionField   String
-  operator         String
-  expectedValue    String
-  effectiveFrom    DateTime?
-  effectiveTo      DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime
+  id                   Int      @id @default(autoincrement())
+  eligibilityRuleId    Int
+  notificationSourceId Int?
+  versionNumber        Int
+  status               String
+  conditionField       String
+  operator             String
+  expectedValue        String
+  effectiveFrom        DateTime?
+  effectiveTo          DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime
 
-  eligibilityRule EligibilityRule @relation(fields: [eligibilityRuleId], references: [id])
+  eligibilityRule    EligibilityRule     @relation(fields: [eligibilityRuleId], references: [id])
+  notificationSource NotificationSource?  @relation(fields: [notificationSourceId], references: [id])
 
   @@index([eligibilityRuleId])
+  @@index([notificationSourceId])
+}
+
+model NotificationSource {
+  id                    Int      @id @default(autoincrement())
+  organization          String
+  notificationTitle     String
+  notificationDate      DateTime?
+  officialUrl            String
+  notificationIdentifier String?
+  dateImported          DateTime @default(now())
+  lastVerifiedAt        DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime
+
+  eligibilityRuleVersions EligibilityRuleVersion[]
+
+  @@index([organization])
 }

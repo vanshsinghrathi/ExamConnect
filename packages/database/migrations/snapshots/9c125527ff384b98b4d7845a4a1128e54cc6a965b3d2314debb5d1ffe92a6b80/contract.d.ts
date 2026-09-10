@@ -33,7 +33,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'6b7e63560eb040a8d865569e528910b9e462b9ad4ae0522a17e31b2dda984907'>;
+  StorageHashBase<'9c125527ff384b98b4d7845a4a1128e54cc6a965b3d2314debb5d1ffe92a6b80'>;
 export type ExecutionHash = ExecutionHashBase<string>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
@@ -265,7 +265,7 @@ export type FieldOutputTypes = {
     readonly EligibilityRuleVersion: {
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly eligibilityRuleId: CodecTypes['pg/int4@1']['output'];
-      readonly notificationSourceId: CodecTypes['pg/int4@1']['output'] | null;
+      readonly notificationSourceId: CodecTypes['pg/int4@1']['output'];
       readonly versionNumber: CodecTypes['pg/int4@1']['output'];
       readonly status: CodecTypes['pg/text@1']['output'];
       readonly conditionField: CodecTypes['pg/text@1']['output'];
@@ -345,7 +345,7 @@ export type FieldInputTypes = {
     readonly EligibilityRuleVersion: {
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly eligibilityRuleId: CodecTypes['pg/int4@1']['input'];
-      readonly notificationSourceId: CodecTypes['pg/int4@1']['input'] | null;
+      readonly notificationSourceId: CodecTypes['pg/int4@1']['input'];
       readonly versionNumber: CodecTypes['pg/int4@1']['input'];
       readonly status: CodecTypes['pg/text@1']['input'];
       readonly conditionField: CodecTypes['pg/text@1']['input'];
@@ -430,7 +430,7 @@ export type StorageColumnTypes = {
       readonly eligibilityRuleId: CodecTypes['pg/int4@1']['output'];
       readonly expectedValue: CodecTypes['pg/text@1']['output'];
       readonly id: CodecTypes['pg/int4@1']['output'];
-      readonly notificationSourceId: CodecTypes['pg/int4@1']['output'] | null;
+      readonly notificationSourceId: CodecTypes['pg/int4@1']['output'];
       readonly operator: CodecTypes['pg/text@1']['output'];
       readonly status: CodecTypes['pg/text@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -510,7 +510,7 @@ export type StorageColumnInputTypes = {
       readonly eligibilityRuleId: CodecTypes['pg/int4@1']['input'];
       readonly expectedValue: CodecTypes['pg/text@1']['input'];
       readonly id: CodecTypes['pg/int4@1']['input'];
-      readonly notificationSourceId: CodecTypes['pg/int4@1']['input'] | null;
+      readonly notificationSourceId: CodecTypes['pg/int4@1']['input'];
       readonly operator: CodecTypes['pg/text@1']['input'];
       readonly status: CodecTypes['pg/text@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -751,7 +751,7 @@ type ContractBase = Omit<
                 readonly notificationSourceId: {
                   readonly nativeType: 'int4';
                   readonly codecId: 'pg/int4@1';
-                  readonly nullable: true;
+                  readonly nullable: false;
                 };
                 readonly versionNumber: {
                   readonly nativeType: 'int4';
@@ -1281,7 +1281,7 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly notificationSourceId: {
-                readonly nullable: true;
+                readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly versionNumber: {

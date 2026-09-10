@@ -1,0 +1,203 @@
+[
+  {
+    "id": "table.notificationSource",
+    "label": "Create table \"notificationSource\"",
+    "summary": "Creates table \"notificationSource\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "notificationSource"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"notificationSource\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notificationSource\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"notificationSource\"",
+        "sql": "CREATE TABLE \"public\".\"notificationSource\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"dateImported\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"lastVerifiedAt\" timestamptz,\n  \"notificationDate\" timestamptz,\n  \"notificationIdentifier\" text,\n  \"notificationTitle\" text NOT NULL,\n  \"officialUrl\" text NOT NULL,\n  \"organization\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"notificationSource\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notificationSource\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.eligibilityRuleVersion.notificationSourceId",
+    "label": "Add column \"notificationSourceId\" to \"eligibilityRuleVersion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "notificationSourceId",
+        "table": "eligibilityRuleVersion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"notificationSourceId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "eligibilityRuleVersion",
+          "notificationSourceId"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"notificationSourceId\"",
+        "sql": "ALTER TABLE \"public\".\"eligibilityRuleVersion\" ADD COLUMN \"notificationSourceId\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"notificationSourceId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "eligibilityRuleVersion",
+          "notificationSourceId"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.eligibilityRuleVersion.eligibilityRuleVersion_notificationSourceId_idx_9d960425",
+    "label": "Create index \"eligibilityRuleVersion_notificationSourceId_idx_9d960425\" on \"eligibilityRuleVersion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "eligibilityRuleVersion_notificationSourceId_idx_9d960425",
+        "table": "eligibilityRuleVersion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"eligibilityRuleVersion_notificationSourceId_idx_9d960425\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"eligibilityRuleVersion_notificationSourceId_idx_9d960425\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"eligibilityRuleVersion_notificationSourceId_idx_9d960425\"",
+        "sql": "CREATE INDEX \"eligibilityRuleVersion_notificationSourceId_idx_9d960425\" ON \"public\".\"eligibilityRuleVersion\" (\"notificationSourceId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"eligibilityRuleVersion_notificationSourceId_idx_9d960425\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"eligibilityRuleVersion_notificationSourceId_idx_9d960425\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.notificationSource.notificationSource_organization_idx_976134b7",
+    "label": "Create index \"notificationSource_organization_idx_976134b7\" on \"notificationSource\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "notificationSource_organization_idx_976134b7",
+        "table": "notificationSource"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"notificationSource_organization_idx_976134b7\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notificationSource_organization_idx_976134b7\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"notificationSource_organization_idx_976134b7\"",
+        "sql": "CREATE INDEX \"notificationSource_organization_idx_976134b7\" ON \"public\".\"notificationSource\" (\"organization\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"notificationSource_organization_idx_976134b7\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notificationSource_organization_idx_976134b7\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.eligibilityRuleVersion.eligibilityRuleVersion_notificationSourceId_fkey",
+    "label": "Add foreign key \"eligibilityRuleVersion_notificationSourceId_fkey\" on \"eligibilityRuleVersion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "eligibilityRuleVersion_notificationSourceId_fkey",
+        "table": "eligibilityRuleVersion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"eligibilityRuleVersion_notificationSourceId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "eligibilityRuleVersion_notificationSourceId_fkey",
+          "public",
+          "\"public\".\"eligibilityRuleVersion\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"eligibilityRuleVersion_notificationSourceId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"eligibilityRuleVersion\"\nADD CONSTRAINT \"eligibilityRuleVersion_notificationSourceId_fkey\"\nFOREIGN KEY (\"notificationSourceId\")\nREFERENCES \"public\".\"notificationSource\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"eligibilityRuleVersion_notificationSourceId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "eligibilityRuleVersion_notificationSourceId_fkey",
+          "public",
+          "\"public\".\"eligibilityRuleVersion\""
+        ]
+      }
+    ]
+  }
+]

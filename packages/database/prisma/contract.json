@@ -20,6 +20,10 @@
       "model": "Exam",
       "namespace": "public"
     },
+    "notificationSource": {
+      "model": "NotificationSource",
+      "namespace": "public"
+    },
     "studentProfile": {
       "model": "StudentProfile",
       "namespace": "public"
@@ -333,6 +337,13 @@
                   "kind": "scalar"
                 }
               },
+              "notificationSourceId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "operator": {
                 "nullable": false,
                 "type": {
@@ -377,6 +388,21 @@
                   "model": "EligibilityRule",
                   "namespace": "public"
                 }
+              },
+              "notificationSource": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "notificationSourceId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "NotificationSource",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -401,6 +427,9 @@
                 },
                 "id": {
                   "column": "id"
+                },
+                "notificationSourceId": {
+                  "column": "notificationSourceId"
                 },
                 "operator": {
                   "column": "operator"
@@ -524,6 +553,133 @@
               },
               "namespaceId": "public",
               "table": "exam"
+            }
+          },
+          "NotificationSource": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "dateImported": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "lastVerifiedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "notificationDate": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "notificationIdentifier": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "notificationTitle": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "officialUrl": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "organization": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "eligibilityRuleVersions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "notificationSourceId"
+                  ]
+                },
+                "to": {
+                  "model": "EligibilityRuleVersion",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "dateImported": {
+                  "column": "dateImported"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "lastVerifiedAt": {
+                  "column": "lastVerifiedAt"
+                },
+                "notificationDate": {
+                  "column": "notificationDate"
+                },
+                "notificationIdentifier": {
+                  "column": "notificationIdentifier"
+                },
+                "notificationTitle": {
+                  "column": "notificationTitle"
+                },
+                "officialUrl": {
+                  "column": "officialUrl"
+                },
+                "organization": {
+                  "column": "organization"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "notificationSource"
             }
           },
           "StudentProfile": {
@@ -971,6 +1127,11 @@
                   "nativeType": "int4",
                   "nullable": false
                 },
+                "notificationSourceId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
                 "operator": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -1008,6 +1169,22 @@
                     "namespaceId": "public",
                     "tableName": "eligibilityRule"
                   }
+                },
+                {
+                  "source": {
+                    "columns": [
+                      "notificationSourceId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "eligibilityRuleVersion"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "notificationSource"
+                  }
                 }
               ],
               "indexes": [
@@ -1017,6 +1194,14 @@
                   ],
                   "name": "eligibilityRuleVersion_eligibilityRuleId_idx_9f2f45a7",
                   "prefix": "eligibilityRuleVersion_eligibilityRuleId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "notificationSourceId"
+                  ],
+                  "name": "eligibilityRuleVersion_notificationSourceId_idx_9d960425",
+                  "prefix": "eligibilityRuleVersion_notificationSourceId_idx",
                   "unique": false
                 }
               ],
@@ -1080,6 +1265,89 @@
               },
               "foreignKeys": [],
               "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "notificationSource": {
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "dateImported": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "lastVerifiedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "notificationDate": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "notificationIdentifier": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "notificationTitle": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "officialUrl": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "organization": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [
+                {
+                  "columns": [
+                    "organization"
+                  ],
+                  "name": "notificationSource_organization_idx_976134b7",
+                  "prefix": "notificationSource_organization_idx",
+                  "unique": false
+                }
+              ],
               "primaryKey": {
                 "columns": [
                   "id"
@@ -1232,7 +1500,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "d73eea6b817381b16c7382bef06c6224e66c7ef519779a3977e7a18231cc33fa"
+    "storageHash": "6b7e63560eb040a8d865569e528910b9e462b9ad4ae0522a17e31b2dda984907"
   },
   "capabilities": {
     "postgres": {
