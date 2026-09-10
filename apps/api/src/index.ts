@@ -1,5 +1,6 @@
 ﻿import Fastify from "fastify";
 import cookie from "@fastify/cookie";
+import { adminNotificationSourceRoute } from "./admin-notification-sources.js";
 import { db } from "@examconnect/database";
 
 import { registerRoute } from "./auth/register.js";
@@ -64,6 +65,7 @@ await protectedRoute(app);
 
 // Admin exam routes.
 await adminExamRoute(app);
+await adminNotificationSourceRoute(app);
 
 // Graceful shutdown.
 const shutdown = async () => {

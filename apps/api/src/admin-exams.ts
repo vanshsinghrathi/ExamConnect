@@ -1,4 +1,4 @@
-﻿import type { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { Temporal } from "@js-temporal/polyfill";
 import { db } from "@examconnect/database";
@@ -43,6 +43,10 @@ const createDeadlineSchema = z.object({
   applicationStart: z.string().datetime().optional(),
   applicationEnd: z.string().datetime().optional(),
   examDate: z.string().datetime().optional(),
+});
+
+const attachSourceSchema = z.object({
+  notificationSourceId: z.number().int().positive(),
 });
 
 export async function adminExamRoute(app: FastifyInstance) {
@@ -308,6 +312,90 @@ export async function adminExamRoute(app: FastifyInstance) {
 
       return reply.code(201).send({
         deadline,
+      });
+    },
+  );
+
+  /*
+   * Attach an official notification source
+   * to an eligibility rule version.
+   */
+  app.patch(
+    "/admin/eligibility-rule-versions/:versionId/source",
+    {
+      preHandler: [
+        requireAuth,
+        requireRole("ADMIN"),
+      ],
+    },
+    async (request, reply) => {
+      const versionId = Number(
+        (request.params as { versionId: string }).versionId,
+      );
+
+      if (!Number.isInteger(versionId) || versionId <= 0) {
+        return reply.code(400).send({
+          error: "INVALID_ID",
+          message:
+            "Eligibility rule version ID must be a positive integer.",
+        });
+      }
+
+      const parsed =
+        attachSourceSchema.safeParse(request.body);
+
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: "INVALID_INPUT",
+          message:
+            "Invalid notification source data.",
+        });
+      }
+
+      const version =
+        await db.orm.public.EligibilityRuleVersion
+          .where({
+            id: versionId,
+          })
+          .first();
+
+      if (!version) {
+        return reply.code(404).send({
+          error: "RULE_VERSION_NOT_FOUND",
+          message:
+            "Eligibility rule version not found.",
+        });
+      }
+
+      const source =
+        await db.orm.public.NotificationSource
+          .where({
+            id: parsed.data.notificationSourceId,
+          })
+          .first();
+
+      if (!source) {
+        return reply.code(404).send({
+          error: "NOTIFICATION_SOURCE_NOT_FOUND",
+          message:
+            "Notification source not found.",
+        });
+      }
+
+      const updated =
+        await db.orm.public.EligibilityRuleVersion
+          .where({
+            id: versionId,
+          })
+          .update({
+            notificationSourceId:
+              parsed.data.notificationSourceId,
+            updatedAt: Temporal.Now.instant(),
+          });
+
+      return reply.send({
+        version: updated,
+        notificationSource: source,
       });
     },
   );
