@@ -1,4 +1,5 @@
 ﻿import Fastify from "fastify";
+import { studentRoute } from "./student.js";
 import cookie from "@fastify/cookie";
 import { db } from "@examconnect/database";
 
@@ -44,6 +45,8 @@ await registerRoute(app);
 await loginRoute(app);
 await logoutRoute(app);
 await meRoute(app);
+
+await studentRoute(app);
 
 // Protected student/admin routes.
 await protectedRoute(app);
