@@ -1,5 +1,4 @@
 ﻿import Fastify from "fastify";
-import { studentRoute } from "./student.js";
 import cookie from "@fastify/cookie";
 import { db } from "@examconnect/database";
 
@@ -8,6 +7,10 @@ import { loginRoute } from "./auth/login.js";
 import { logoutRoute } from "./auth/logout.js";
 import { meRoute } from "./auth/me.js";
 import { protectedRoute } from "./auth/protected.js";
+
+import { studentRoute } from "./student.js";
+import { examRoute } from "./exams.js";
+import { adminExamRoute } from "./admin-exams.js";
 
 const app = Fastify({
   logger: false,
@@ -46,10 +49,17 @@ await loginRoute(app);
 await logoutRoute(app);
 await meRoute(app);
 
+// Student routes.
 await studentRoute(app);
 
-// Protected student/admin routes.
+// Exam read routes.
+await examRoute(app);
+
+// Protected routes.
 await protectedRoute(app);
+
+// Admin exam routes.
+await adminExamRoute(app);
 
 // Graceful shutdown.
 const shutdown = async () => {
