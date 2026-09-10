@@ -28,6 +28,35 @@ type EligibilityDeadline = {
   examDate: string | null;
 };
 
+function calculateApplicationStatus(
+  applicationStart: string | null,
+  applicationEnd: string | null,
+): string {
+  const now = new Date();
+
+  if (applicationStart) {
+    const start = new Date(applicationStart);
+
+    if (now < start) {
+      return "UPCOMING";
+    }
+  }
+
+  if (applicationEnd) {
+    const end = new Date(applicationEnd);
+
+    if (now > end) {
+      return "CLOSED";
+    }
+  }
+
+  if (applicationStart || applicationEnd) {
+    return "OPEN";
+  }
+
+  return "UNKNOWN";
+}
+
 export async function eligibilityRoute(app: FastifyInstance) {
   app.get(
     "/student/eligible-exams",
@@ -194,24 +223,34 @@ export async function eligibilityRoute(app: FastifyInstance) {
           const formattedDeadlines:
             EligibilityDeadline[] =
             deadlines.map(
-              (deadline) => ({
-                id: deadline.id,
-                applicationUrl:
-                  deadline.applicationUrl,
-                status: deadline.status,
-                applicationStart:
+              (deadline) => {
+                const applicationStart =
                   deadline.applicationStart
                     ? deadline.applicationStart.toString()
-                    : null,
-                applicationEnd:
+                    : null;
+
+                const applicationEnd =
                   deadline.applicationEnd
                     ? deadline.applicationEnd.toString()
-                    : null,
-                examDate:
-                  deadline.examDate
-                    ? deadline.examDate.toString()
-                    : null,
-              }),
+                    : null;
+
+                return {
+                  id: deadline.id,
+                  applicationUrl:
+                    deadline.applicationUrl,
+                  status:
+                    calculateApplicationStatus(
+                      applicationStart,
+                      applicationEnd,
+                    ),
+                  applicationStart,
+                  applicationEnd,
+                  examDate:
+                    deadline.examDate
+                      ? deadline.examDate.toString()
+                      : null,
+                };
+              },
             );
 
           results.push({
@@ -347,24 +386,34 @@ export async function eligibilityRoute(app: FastifyInstance) {
           const formattedDeadlines:
             EligibilityDeadline[] =
             deadlines.map(
-              (deadline) => ({
-                id: deadline.id,
-                applicationUrl:
-                  deadline.applicationUrl,
-                status: deadline.status,
-                applicationStart:
+              (deadline) => {
+                const applicationStart =
                   deadline.applicationStart
                     ? deadline.applicationStart.toString()
-                    : null,
-                applicationEnd:
+                    : null;
+
+                const applicationEnd =
                   deadline.applicationEnd
                     ? deadline.applicationEnd.toString()
-                    : null,
-                examDate:
-                  deadline.examDate
-                    ? deadline.examDate.toString()
-                    : null,
-              }),
+                    : null;
+
+                return {
+                  id: deadline.id,
+                  applicationUrl:
+                    deadline.applicationUrl,
+                  status:
+                    calculateApplicationStatus(
+                      applicationStart,
+                      applicationEnd,
+                    ),
+                  applicationStart,
+                  applicationEnd,
+                  examDate:
+                    deadline.examDate
+                      ? deadline.examDate.toString()
+                      : null,
+                };
+              },
             );
 
           const combinedSources = [
