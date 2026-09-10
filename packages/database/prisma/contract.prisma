@@ -48,4 +48,39 @@ model Exam {
   officialWebsite String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime
+
+  eligibilityRules EligibilityRule[]
+}
+
+model EligibilityRule {
+  id          Int      @id @default(autoincrement())
+  examId      Int
+  ruleType    String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+
+  exam     Exam                     @relation(fields: [examId], references: [id])
+  versions EligibilityRuleVersion[]
+
+  @@index([examId])
+}
+
+model EligibilityRuleVersion {
+  id               Int      @id @default(autoincrement())
+  eligibilityRuleId Int
+  versionNumber    Int
+  status           String
+  conditionField   String
+  operator         String
+  expectedValue    String
+  effectiveFrom    DateTime?
+  effectiveTo      DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime
+
+  eligibilityRule EligibilityRule @relation(fields: [eligibilityRuleId], references: [id])
+
+  @@index([eligibilityRuleId])
 }

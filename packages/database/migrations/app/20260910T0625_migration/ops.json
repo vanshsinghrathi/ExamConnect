@@ -1,0 +1,242 @@
+[
+  {
+    "id": "table.eligibilityRule",
+    "label": "Create table \"eligibilityRule\"",
+    "summary": "Creates table \"eligibilityRule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "eligibilityRule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"eligibilityRule\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"eligibilityRule\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"eligibilityRule\"",
+        "sql": "CREATE TABLE \"public\".\"eligibilityRule\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"examId\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"name\" text NOT NULL,\n  \"ruleType\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"eligibilityRule\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"eligibilityRule\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.eligibilityRuleVersion",
+    "label": "Create table \"eligibilityRuleVersion\"",
+    "summary": "Creates table \"eligibilityRuleVersion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "eligibilityRuleVersion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"eligibilityRuleVersion\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"eligibilityRuleVersion\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"eligibilityRuleVersion\"",
+        "sql": "CREATE TABLE \"public\".\"eligibilityRuleVersion\" (\n  \"conditionField\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"effectiveFrom\" timestamptz,\n  \"effectiveTo\" timestamptz,\n  \"eligibilityRuleId\" int4 NOT NULL,\n  \"expectedValue\" text NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"operator\" text NOT NULL,\n  \"status\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"versionNumber\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"eligibilityRuleVersion\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"eligibilityRuleVersion\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.eligibilityRule.eligibilityRule_examId_idx_a57bdadd",
+    "label": "Create index \"eligibilityRule_examId_idx_a57bdadd\" on \"eligibilityRule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "eligibilityRule_examId_idx_a57bdadd",
+        "table": "eligibilityRule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"eligibilityRule_examId_idx_a57bdadd\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"eligibilityRule_examId_idx_a57bdadd\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"eligibilityRule_examId_idx_a57bdadd\"",
+        "sql": "CREATE INDEX \"eligibilityRule_examId_idx_a57bdadd\" ON \"public\".\"eligibilityRule\" (\"examId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"eligibilityRule_examId_idx_a57bdadd\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"eligibilityRule_examId_idx_a57bdadd\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.eligibilityRuleVersion.eligibilityRuleVersion_eligibilityRuleId_idx_9f2f45a7",
+    "label": "Create index \"eligibilityRuleVersion_eligibilityRuleId_idx_9f2f45a7\" on \"eligibilityRuleVersion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "eligibilityRuleVersion_eligibilityRuleId_idx_9f2f45a7",
+        "table": "eligibilityRuleVersion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"eligibilityRuleVersion_eligibilityRuleId_idx_9f2f45a7\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"eligibilityRuleVersion_eligibilityRuleId_idx_9f2f45a7\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"eligibilityRuleVersion_eligibilityRuleId_idx_9f2f45a7\"",
+        "sql": "CREATE INDEX \"eligibilityRuleVersion_eligibilityRuleId_idx_9f2f45a7\" ON \"public\".\"eligibilityRuleVersion\" (\"eligibilityRuleId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"eligibilityRuleVersion_eligibilityRuleId_idx_9f2f45a7\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"eligibilityRuleVersion_eligibilityRuleId_idx_9f2f45a7\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.eligibilityRule.eligibilityRule_examId_fkey",
+    "label": "Add foreign key \"eligibilityRule_examId_fkey\" on \"eligibilityRule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "eligibilityRule_examId_fkey",
+        "table": "eligibilityRule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"eligibilityRule_examId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "eligibilityRule_examId_fkey",
+          "public",
+          "\"public\".\"eligibilityRule\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"eligibilityRule_examId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"eligibilityRule\"\nADD CONSTRAINT \"eligibilityRule_examId_fkey\"\nFOREIGN KEY (\"examId\")\nREFERENCES \"public\".\"exam\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"eligibilityRule_examId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "eligibilityRule_examId_fkey",
+          "public",
+          "\"public\".\"eligibilityRule\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.eligibilityRuleVersion.eligibilityRuleVersion_eligibilityRuleId_fkey",
+    "label": "Add foreign key \"eligibilityRuleVersion_eligibilityRuleId_fkey\" on \"eligibilityRuleVersion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "eligibilityRuleVersion_eligibilityRuleId_fkey",
+        "table": "eligibilityRuleVersion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"eligibilityRuleVersion_eligibilityRuleId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "eligibilityRuleVersion_eligibilityRuleId_fkey",
+          "public",
+          "\"public\".\"eligibilityRuleVersion\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"eligibilityRuleVersion_eligibilityRuleId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"eligibilityRuleVersion\"\nADD CONSTRAINT \"eligibilityRuleVersion_eligibilityRuleId_fkey\"\nFOREIGN KEY (\"eligibilityRuleId\")\nREFERENCES \"public\".\"eligibilityRule\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"eligibilityRuleVersion_eligibilityRuleId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "eligibilityRuleVersion_eligibilityRuleId_fkey",
+          "public",
+          "\"public\".\"eligibilityRuleVersion\""
+        ]
+      }
+    ]
+  }
+]
