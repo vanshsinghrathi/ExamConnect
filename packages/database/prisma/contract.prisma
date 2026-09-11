@@ -74,19 +74,22 @@ applicationDeadlines ApplicationDeadline[]
 }
 
 model Post {
-id          Int      @id @default(autoincrement())
-examId      Int
-name        String
-code        String?
-description String?
-createdAt   DateTime @default(now())
-updatedAt   DateTime
+  id            Int      @id @default(autoincrement())
+  examId        Int
+  name          String
+  code          String?
+  department    String?
+  vacancies     Int?
+  qualification String?
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt    DateTime
 
-exam                 Exam                  @relation(fields: [examId], references: [id])
-eligibilityRules     EligibilityRule[]
-applicationDeadlines ApplicationDeadline[]
+  exam                 Exam                  @relation(fields: [examId], references: [id])
+  eligibilityRules     EligibilityRule[]
+  applicationDeadlines ApplicationDeadline[]
 
-@@index([examId])
+  @@index([examId])
 }
 
 model EligibilityRule {

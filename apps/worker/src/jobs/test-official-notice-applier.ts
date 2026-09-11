@@ -1,34 +1,90 @@
+
+import { readFile } from "node:fs/promises";
 import { parseOfficialNotice } from "./official-notice-parser.js";
 import { applyParsedOfficialNotice } from "./official-notice-applier.js";
 
-const sampleNotice = `
-EXAM NAME: SSC CGL 2026
-CONDUCTING BODY: Staff Selection Commission
-EXAM TYPE: Government Recruitment Examination
-DESCRIPTION: Combined Graduate Level Examination
-APPLICATION START: 01/09/2026
-LAST DATE: 30/09/2026
-EXAM DATE: 15/11/2026
-POST NAME: Assistant Section Officer
-POST CODE: ASO
-EDUCATIONAL QUALIFICATION: Bachelor's Degree
-AGE LIMIT: 18-32 years
-APPLICATION URL: https://example.com/apply
-`;
+const noticePath = new URL(
+  "../../tmp-upsc-notification.txt",
+  import.meta.url,
+);
 
 async function main() {
-  const parsed = parseOfficialNotice(sampleNotice);
-
-  console.log("Parsed notice:");
-  console.log(JSON.stringify(parsed, null, 2));
-
-  const result = await applyParsedOfficialNotice(
-    2,
-    parsed,
+  const noticeText = await readFile(
+    noticePath,
+    "utf8",
   );
 
-  console.log("Applied notice:");
-  console.log(JSON.stringify(result, null, 2));
+  console.log(
+    "=== Reading official UPSC notice ===",
+  );
+
+  const parsed = parseOfficialNotice(
+    noticeText,
+  );
+
+  console.log(
+    "\n=== Parsed notice ===",
+  );
+
+  console.log(
+    JSON.stringify(
+      parsed,
+      null,
+      2,
+    ),
+  );
+
+  if (!parsed.examName) {
+    throw new Error(
+      "Parser did not extract examName.",
+    );
+  }
+
+  if (!parsed.conductingBody) {
+    throw new Error(
+      "Parser did not extract conductingBody.",
+    );
+  }
+
+  if (parsed.posts.length === 0) {
+    throw new Error(
+      "Parser did not extract any posts.",
+    );
+  }
+
+  console.log(
+    `\nExam: ${parsed.examName}`,
+  );
+
+  console.log(
+    `Conducting body: ${parsed.conductingBody}`,
+  );
+
+  console.log(
+    `Posts found: ${parsed.posts.length}`,
+  );
+
+  console.log(
+    "\n=== Applying official notice ===",
+  );
+
+  const result =
+    await applyParsedOfficialNotice(
+      1,
+      parsed,
+    );
+
+  console.log(
+    "\n=== Applied notice result ===",
+  );
+
+  console.log(
+    JSON.stringify(
+      result,
+      null,
+      2,
+    ),
+  );
 }
 
 await main();

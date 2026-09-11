@@ -1,0 +1,128 @@
+[
+  {
+    "id": "column.public.post.department",
+    "label": "Add column \"department\" to \"post\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "department",
+        "table": "post"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"department\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "post",
+          "department"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"department\"",
+        "sql": "ALTER TABLE \"public\".\"post\" ADD COLUMN \"department\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"department\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "post",
+          "department"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.post.qualification",
+    "label": "Add column \"qualification\" to \"post\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "qualification",
+        "table": "post"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"qualification\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "post",
+          "qualification"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"qualification\"",
+        "sql": "ALTER TABLE \"public\".\"post\" ADD COLUMN \"qualification\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"qualification\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "post",
+          "qualification"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.post.vacancies",
+    "label": "Add column \"vacancies\" to \"post\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "vacancies",
+        "table": "post"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"vacancies\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "post",
+          "vacancies"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"vacancies\"",
+        "sql": "ALTER TABLE \"public\".\"post\" ADD COLUMN \"vacancies\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"vacancies\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "post",
+          "vacancies"
+        ]
+      }
+    ]
+  }
+]
