@@ -1,14 +1,14 @@
-﻿import { Queue, Worker } from "bullmq";
-import { Redis } from "ioredis";
+﻿import { Worker } from "bullmq";
 
-import { generateDeadlineNotifications } from "./notifications/deadline-notifications.js";
+import {
+  notificationQueue,
+  redisConnection,
+} from "./queue.js";
 
-const redisConnection = new Redis("redis://localhost:6379", {
-  maxRetriesPerRequest: null,
-  retryStrategy(times) {
-    return Math.min(times * 500, 5000);
-  },
-});
+import {
+  NOTIFICATION_JOB_NAMES,
+  processNotificationJob,
+} from "./jobs/notification-jobs.js";
 
 redisConnection.on("connect", () => {
   console.log("[redis] connected");
@@ -26,31 +26,9 @@ redisConnection.on("close", () => {
   console.log("[redis] connection closed");
 });
 
-const queue = new Queue("examconnect-notifications", {
-  connection: redisConnection,
-});
-
 const worker = new Worker(
   "examconnect-notifications",
-  async (job) => {
-    console.log(
-      "[worker] processing job=" + job.name,
-    );
-
-    if (job.name === "deadline-notifications") {
-      const result =
-        await generateDeadlineNotifications();
-
-      console.log(
-        "[deadline-notifications] created=" +
-          result.createdCount,
-      );
-
-      return result;
-    }
-
-    return null;
-  },
+  processNotificationJob,
   {
     connection: redisConnection,
   },
@@ -58,7 +36,10 @@ const worker = new Worker(
 
 worker.on("completed", (job) => {
   console.log(
-    "[worker] completed job=" + job.name,
+    "[worker] completed job=" +
+      job.name +
+      " attempts=" +
+      job.attemptsMade,
   );
 });
 
@@ -66,6 +47,8 @@ worker.on("failed", (job, error) => {
   console.error(
     "[worker] failed job=" +
       (job?.name ?? "unknown") +
+      " attempts=" +
+      (job?.attemptsMade ?? 0) +
       ":",
     error,
   );
@@ -75,14 +58,21 @@ worker.on("error", (error) => {
   console.error("[worker] error:", error);
 });
 
-await queue.upsertJobScheduler(
+await notificationQueue.upsertJobScheduler(
   "deadline-notification-scheduler",
   {
     every: 60 * 60 * 1000,
   },
   {
-    name: "deadline-notifications",
+    name: NOTIFICATION_JOB_NAMES.DEADLINE,
     data: {},
+    opts: {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 5000,
+      },
+    },
   },
 );
 
@@ -91,14 +81,15 @@ console.log(
   "Deadline notification scheduler: every 1 hour",
 );
 console.log(
-  "Test schedule: deadline job every 10 seconds",
+  "Retry policy: 3 attempts with exponential backoff",
 );
+console.log("Notification job structure active");
 
 const shutdown = async () => {
   console.log("[worker] shutting down...");
 
   await worker.close();
-  await queue.close();
+  await notificationQueue.close();
   await redisConnection.quit();
 
   process.exit(0);
