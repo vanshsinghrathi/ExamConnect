@@ -2,6 +2,9 @@ import { createHash } from "node:crypto";
 import { Temporal } from "@js-temporal/polyfill";
 import { db } from "@examconnect/database";
 
+import { parseOfficialNotice } from "./official-notice-parser.js";
+import { applyParsedOfficialNotice } from "./official-notice-applier.js";
+
 type SourceIngestionResult = {
 sourceId: number;
 url: string;
@@ -15,6 +18,14 @@ previousContentHash: string | null;
 contentChanged: boolean;
 firstFetch: boolean;
 notificationsCreated: number;
+rulesCreated: number;
+rulesUpdated: number;
+examId: number | null;
+postId: number | null;
+deadlineId: number | null;
+parsedExamName: string | null;
+parsedApplicationEnd: string | null;
+parsedExamDate: string | null;
 fetchedAt: string;
 error: string | null;
 };
@@ -43,7 +54,7 @@ new RegExp("<[^>]*>", "g"),
 );
 
 text = text
-.replace(/ /gi, " ")
+.replace(/ /gi, " ")
 .replace(/&/gi, "&")
 .replace(/</gi, "<")
 .replace(/>/gi, ">")
@@ -106,7 +117,9 @@ if (!exam) {
 }
 
 const ruleKey =
-  rule.examId + ":" + (rule.postId ?? "exam");
+  rule.examId +
+  ":" +
+  (rule.postId ?? "exam");
 
 if (notifiedRules.has(ruleKey)) {
   continue;
@@ -149,6 +162,67 @@ for (const profile of profiles) {
 return notificationsCreated;
 }
 
+type FetchResult = {
+response: Response;
+rawContent: string;
+};
+
+async function fetchOfficialSource(
+url: string,
+): Promise<FetchResult> {
+const headers = {
+"User-Agent":
+"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+Accept:
+"text/html,application/xhtml+xml,application/xml;q=0.9,application/pdf,text/plain;q=0.8,*/*;q=0.7",
+"Accept-Language":
+"en-IN,en;q=0.9",
+"Cache-Control":
+"no-cache",
+Pragma:
+"no-cache",
+"Upgrade-Insecure-Requests":
+"1",
+Referer:
+"https://www.upsc.gov.in/",
+};
+
+let response = await fetch(url, {
+method: "GET",
+redirect: "follow",
+headers,
+});
+
+let rawContent = await response.text();
+
+if (response.status === 403) {
+console.log(
+"[source-ingestion] received HTTP 403; retrying with browser headers",
+);
+
+response = await fetch(url, {
+  method: "GET",
+  redirect: "follow",
+  headers: {
+    ...headers,
+    Referer: url,
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1",
+  },
+});
+
+rawContent = await response.text();
+
+}
+
+return {
+response,
+rawContent,
+};
+}
+
 export async function ingestNotificationSource(
 sourceId: number,
 ): Promise<SourceIngestionResult> {
@@ -176,31 +250,30 @@ previousContentHash: null,
 contentChanged: false,
 firstFetch: false,
 notificationsCreated: 0,
+rulesCreated: 0,
+rulesUpdated: 0,
+examId: null,
+postId: null,
+deadlineId: null,
+parsedExamName: null,
+parsedApplicationEnd: null,
+parsedExamDate: null,
 fetchedAt,
 error: "NOTIFICATION_SOURCE_NOT_FOUND",
 };
 }
 
 try {
-const response = await fetch(
+const fetchResult =
+await fetchOfficialSource(
 source.officialUrl,
-{
-method: "GET",
-redirect: "follow",
-headers: {
-"User-Agent":
-"ExamConnect-Bot/1.0",
-Accept:
-"text/html,application/xhtml+xml,application/pdf,text/plain;q=0.9,*/*;q=0.8",
-},
-},
 );
+
+const response = fetchResult.response;
+const rawContent = fetchResult.rawContent;
 
 const contentType =
   response.headers.get("content-type");
-
-const rawContent =
-  await response.text();
 
 if (!response.ok) {
   return {
@@ -218,6 +291,14 @@ if (!response.ok) {
     firstFetch:
       source.contentHash === null,
     notificationsCreated: 0,
+    rulesCreated: 0,
+    rulesUpdated: 0,
+    examId: null,
+    postId: null,
+    deadlineId: null,
+    parsedExamName: null,
+    parsedApplicationEnd: null,
+    parsedExamDate: null,
     fetchedAt,
     error:
       "HTTP_" + response.status,
@@ -226,6 +307,9 @@ if (!response.ok) {
 
 const readableText =
   extractReadableText(rawContent);
+
+const parsedNotice =
+  parseOfficialNotice(readableText);
 
 const contentHash =
   createContentHash(readableText);
@@ -254,6 +338,49 @@ await db.orm.public.NotificationSource
   });
 
 let notificationsCreated = 0;
+let rulesCreated = 0;
+let rulesUpdated = 0;
+let examId: number | null = null;
+let postId: number | null = null;
+let deadlineId: number | null = null;
+
+const shouldApplyNotice =
+  firstFetch || contentChanged;
+
+if (
+  shouldApplyNotice &&
+  parsedNotice.examName &&
+  parsedNotice.conductingBody
+) {
+  const applyResult =
+    await applyParsedOfficialNotice(
+      source.id,
+      parsedNotice,
+    );
+
+  if (!applyResult.skipped) {
+    examId = applyResult.examId;
+    postId = applyResult.postId;
+    deadlineId = applyResult.deadlineId;
+    rulesCreated =
+      applyResult.rulesCreated;
+    rulesUpdated =
+      applyResult.rulesUpdated;
+  }
+
+  console.log(
+    "[source-ingestion] parsed notice applied; examId=" +
+      (examId ?? "none") +
+      " postId=" +
+      (postId ?? "none") +
+      " deadlineId=" +
+      (deadlineId ?? "none") +
+      " rulesCreated=" +
+      rulesCreated +
+      " rulesUpdated=" +
+      rulesUpdated,
+  );
+}
 
 if (contentChanged) {
   notificationsCreated =
@@ -280,6 +407,17 @@ return {
   contentChanged,
   firstFetch,
   notificationsCreated,
+  rulesCreated,
+  rulesUpdated,
+  examId,
+  postId,
+  deadlineId,
+  parsedExamName:
+    parsedNotice.examName,
+  parsedApplicationEnd:
+    parsedNotice.applicationEnd,
+  parsedExamDate:
+    parsedNotice.examDate,
   fetchedAt,
   error: null,
 };
@@ -300,6 +438,14 @@ contentChanged: false,
 firstFetch:
 source.contentHash === null,
 notificationsCreated: 0,
+rulesCreated: 0,
+rulesUpdated: 0,
+examId: null,
+postId: null,
+deadlineId: null,
+parsedExamName: null,
+parsedApplicationEnd: null,
+parsedExamDate: null,
 fetchedAt,
 error:
 error instanceof Error
