@@ -1,187 +1,188 @@
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  passwordHash String?
-  role         String   @default("STUDENT")
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime
+id           Int      @id @default(autoincrement())
+email        String   @unique
+passwordHash String?
+role         String   @default("STUDENT")
+isActive     Boolean  @default(true)
+createdAt    DateTime @default(now())
+updatedAt   DateTime
 
-  studentProfile       StudentProfile?
-  sessions             Session[]
-  studentNotifications StudentNotification[]
+studentProfile       StudentProfile?
+sessions             Session[]
+studentNotifications StudentNotification[]
 }
 
 model Session {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  tokenHash  String   @unique
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  lastUsedAt DateTime?
+id         Int      @id @default(autoincrement())
+userId     Int
+tokenHash  String   @unique
+expiresAt  DateTime
+createdAt  DateTime @default(now())
+lastUsedAt DateTime?
 
-  user User @relation(fields: [userId], references: [id])
+user User @relation(fields: [userId], references: [id])
 
-  @@index([userId])
-  @@index([expiresAt])
+@@index([userId])
+@@index([expiresAt])
 }
 
 model StudentProfile {
-  id               Int               @id @default(autoincrement())
-  userId           Int               @unique
-  firstName        String
-  lastName         String?
-  dateOfBirth      DateTime?
-  gender           String?
-  state            String?
-  category         String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime
+id               Int               @id @default(autoincrement())
+userId           Int               @unique
+firstName        String
+lastName         String?
+dateOfBirth      DateTime?
+gender           String?
+state            String?
+category         String?
+createdAt        DateTime          @default(now())
+updatedAt        DateTime
 
-  user             User              @relation(fields: [userId], references: [id])
-  educationRecords EducationRecord[]
+user             User              @relation(fields: [userId], references: [id])
+educationRecords EducationRecord[]
 }
 
 model EducationRecord {
-  id                Int            @id @default(autoincrement())
-  studentProfileId  Int
-  qualification     String
-  courseName        String?
-  institutionName   String?
-  boardOrUniversity String?
-  passingYear       Int?
-  percentage        Float?
-  stream            String?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime
+id                Int            @id @default(autoincrement())
+studentProfileId  Int
+qualification     String
+courseName        String?
+institutionName   String?
+boardOrUniversity String?
+passingYear       Int?
+percentage        Float?
+stream            String?
+createdAt         DateTime       @default(now())
+updatedAt         DateTime
 
-  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id])
+studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id])
 }
 
 model Exam {
-  id              Int      @id @default(autoincrement())
-  name            String
-  conductingBody  String
-  examType        String?
-  description     String?
-  officialWebsite String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime
+id              Int      @id @default(autoincrement())
+name            String
+conductingBody  String
+examType        String?
+description     String?
+officialWebsite String?
+createdAt       DateTime @default(now())
+updatedAt       DateTime
 
-  posts                Post[]
-  eligibilityRules     EligibilityRule[]
-  applicationDeadlines ApplicationDeadline[]
+posts                Post[]
+eligibilityRules     EligibilityRule[]
+applicationDeadlines ApplicationDeadline[]
 }
 
 model Post {
-  id          Int      @id @default(autoincrement())
-  examId      Int
-  name        String
-  code        String?
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime
+id          Int      @id @default(autoincrement())
+examId      Int
+name        String
+code        String?
+description String?
+createdAt   DateTime @default(now())
+updatedAt   DateTime
 
-  exam                 Exam                  @relation(fields: [examId], references: [id])
-  eligibilityRules     EligibilityRule[]
-  applicationDeadlines ApplicationDeadline[]
+exam                 Exam                  @relation(fields: [examId], references: [id])
+eligibilityRules     EligibilityRule[]
+applicationDeadlines ApplicationDeadline[]
 
-  @@index([examId])
+@@index([examId])
 }
 
 model EligibilityRule {
-  id          Int      @id @default(autoincrement())
-  examId      Int
-  postId      Int?
-  ruleType    String
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime
+id          Int      @id @default(autoincrement())
+examId      Int
+postId      Int?
+ruleType    String
+name        String
+description String?
+createdAt   DateTime @default(now())
+updatedAt   DateTime
 
-  exam     Exam                  @relation(fields: [examId], references: [id])
-  post     Post?                 @relation(fields: [postId], references: [id])
-  versions EligibilityRuleVersion[]
+exam     Exam                    @relation(fields: [examId], references: [id])
+post     Post?                   @relation(fields: [postId], references: [id])
+versions EligibilityRuleVersion[]
 
-  @@index([examId])
-  @@index([postId])
+@@index([examId])
+@@index([postId])
 }
 
 model ApplicationDeadline {
-  id               Int      @id @default(autoincrement())
-  examId           Int
-  postId           Int?
-  applicationUrl   String?
-  status           String
-  applicationStart DateTime?
-  applicationEnd   DateTime?
-  examDate         DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime
+id               Int      @id @default(autoincrement())
+examId           Int
+postId           Int?
+applicationUrl   String?
+status           String
+applicationStart DateTime?
+applicationEnd   DateTime?
+examDate         DateTime?
+createdAt        DateTime @default(now())
+updatedAt        DateTime
 
-  exam Exam  @relation(fields: [examId], references: [id])
-  post Post? @relation(fields: [postId], references: [id])
+exam Exam  @relation(fields: [examId], references: [id])
+post Post? @relation(fields: [postId], references: [id])
 
-  @@index([examId])
-  @@index([postId])
-  @@index([applicationEnd])
+@@index([examId])
+@@index([postId])
+@@index([applicationEnd])
 }
 
 model EligibilityRuleVersion {
-  id                   Int      @id @default(autoincrement())
-  eligibilityRuleId    Int
-  notificationSourceId Int?
-  versionNumber        Int
-  status               String
-  conditionField       String
-  operator             String
-  expectedValue        String
-  effectiveFrom        DateTime?
-  effectiveTo          DateTime?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime
+id                   Int      @id @default(autoincrement())
+eligibilityRuleId    Int
+notificationSourceId Int?
+versionNumber        Int
+status               String
+conditionField       String
+operator             String
+expectedValue        String
+effectiveFrom        DateTime?
+effectiveTo          DateTime?
+createdAt            DateTime @default(now())
+updatedAt            DateTime
 
-  eligibilityRule    EligibilityRule     @relation(fields: [eligibilityRuleId], references: [id])
-  notificationSource NotificationSource? @relation(fields: [notificationSourceId], references: [id])
+eligibilityRule    EligibilityRule     @relation(fields: [eligibilityRuleId], references: [id])
+notificationSource NotificationSource? @relation(fields: [notificationSourceId], references: [id])
 
-  @@index([eligibilityRuleId])
-  @@index([notificationSourceId])
+@@index([eligibilityRuleId])
+@@index([notificationSourceId])
 }
 
 model NotificationSource {
-  id                    Int      @id @default(autoincrement())
-  organization          String
-  notificationTitle     String
-  notificationDate      DateTime?
-  officialUrl           String
-  notificationIdentifier String?
-  dateImported          DateTime @default(now())
-  lastVerifiedAt        DateTime?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime
+id                    Int      @id @default(autoincrement())
+organization          String
+notificationTitle     String
+notificationDate      DateTime?
+officialUrl           String
+notificationIdentifier String?
+dateImported          DateTime @default(now())
+lastVerifiedAt        DateTime?
+contentHash           String?
+createdAt              DateTime @default(now())
+updatedAt             DateTime
 
-  eligibilityRuleVersions EligibilityRuleVersion[]
+eligibilityRuleVersions EligibilityRuleVersion[]
 
-  @@index([organization])
+@@index([organization])
 }
 
 model StudentNotification {
-  id         Int       @id @default(autoincrement())
-  userId     Int
-  type       String
-  title      String
-  message    String
-  examId     Int?
-  postId     Int?
-  deadlineId Int?
-  isRead     Boolean   @default(false)
-  createdAt  DateTime  @default(now())
-  readAt     DateTime?
+id         Int       @id @default(autoincrement())
+userId     Int
+type       String
+title      String
+message    String
+examId     Int?
+postId     Int?
+deadlineId Int?
+isRead     Boolean   @default(false)
+createdAt  DateTime  @default(now())
+readAt     DateTime?
 
-  user User @relation(fields: [userId], references: [id])
+user User @relation(fields: [userId], references: [id])
 
-  @@index([userId])
-  @@index([userId, isRead])
-  @@index([deadlineId])
-  @@index([createdAt])
+@@index([userId])
+@@index([userId, isRead])
+@@index([deadlineId])
+@@index([createdAt])
 }

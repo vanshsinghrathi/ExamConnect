@@ -1,4 +1,5 @@
 ﻿import { Worker } from "bullmq";
+import { Redis } from "ioredis";
 
 import {
   notificationQueue,
@@ -76,9 +77,32 @@ await notificationQueue.upsertJobScheduler(
   },
 );
 
+await notificationQueue.upsertJobScheduler(
+  "source-ingestion-scheduler",
+  {
+    every: 60 * 60 * 1000,
+  },
+  {
+    name: NOTIFICATION_JOB_NAMES.SOURCE_INGESTION,
+    data: {
+      sourceId: 2,
+    },
+    opts: {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 5000,
+      },
+    },
+  },
+);
+
 console.log("ExamConnect worker started");
 console.log(
   "Deadline notification scheduler: every 1 hour",
+);
+console.log(
+  "Source ingestion scheduler: every 1 hour",
 );
 console.log(
   "Retry policy: 3 attempts with exponential backoff",
