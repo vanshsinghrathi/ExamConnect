@@ -8,6 +8,11 @@ import {
   requireRole,
 } from "./auth/guards.js";
 
+import {
+  createNewExamNotification,
+  createEligibilityRuleChangedNotification,
+} from "./notifications/notification-service.js";
+
 const createExamSchema = z.object({
   name: z.string().trim().min(1).max(200),
   conductingBody: z.string().trim().min(1).max(200),
@@ -76,6 +81,17 @@ export async function adminExamRoute(app: FastifyInstance) {
         officialWebsite: parsed.data.officialWebsite,
         updatedAt: Temporal.Now.instant(),
       });
+
+      const studentProfiles =
+        await db.orm.public.StudentProfile.all();
+
+      for (const profile of studentProfiles) {
+        await createNewExamNotification({
+          userId: profile.userId,
+          examId: exam.id,
+          examName: exam.name,
+        });
+      }
 
       return reply.code(201).send({
         exam,
@@ -183,6 +199,8 @@ export async function adminExamRoute(app: FastifyInstance) {
         });
       }
 
+      let postName: string | null = null;
+
       if (parsed.data.postId !== undefined) {
         const post = await db.orm.public.Post
           .where({
@@ -197,6 +215,8 @@ export async function adminExamRoute(app: FastifyInstance) {
             message: "Post not found for this exam.",
           });
         }
+
+        postName = post.name;
       }
 
       const now = Temporal.Now.instant();
@@ -226,6 +246,19 @@ export async function adminExamRoute(app: FastifyInstance) {
             : undefined,
           updatedAt: now,
         });
+
+      const studentProfiles =
+        await db.orm.public.StudentProfile.all();
+
+      for (const profile of studentProfiles) {
+        await createEligibilityRuleChangedNotification({
+          userId: profile.userId,
+          examId,
+          postId: parsed.data.postId ?? null,
+          examName: exam.name,
+          postName,
+        });
+      }
 
       return reply.code(201).send({
         eligibilityRule: rule,
@@ -316,10 +349,6 @@ export async function adminExamRoute(app: FastifyInstance) {
     },
   );
 
-  /*
-   * Attach an official notification source
-   * to an eligibility rule version.
-   */
   app.patch(
     "/admin/eligibility-rule-versions/:versionId/source",
     {

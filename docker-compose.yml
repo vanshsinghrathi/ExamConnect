@@ -12,5 +12,15 @@ services:
     volumes:
       - examconnect_postgres_data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:7
+    container_name: examconnect-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - examconnect_redis_data:/data
+
 volumes:
   examconnect_postgres_data:
+  examconnect_redis_data:
