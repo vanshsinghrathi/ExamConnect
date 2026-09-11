@@ -1,3 +1,4 @@
+
 import type { FastifyInstance } from "fastify";
 import { db } from "@examconnect/database";
 
@@ -159,7 +160,8 @@ export async function eligibilityRoute(app: FastifyInstance) {
                 officialUrl: source.officialUrl,
                 notificationIdentifier:
                   source.notificationIdentifier,
-                dateImported: source.dateImported.toString(),
+                dateImported:
+                  source.dateImported.toString(),
                 lastVerifiedAt: source.lastVerifiedAt
                   ? source.lastVerifiedAt.toString()
                   : null,
@@ -170,44 +172,57 @@ export async function eligibilityRoute(app: FastifyInstance) {
 
         const uniqueExamSources = Array.from(
           new Map(
-            examSources.map((source) => [source.id, source]),
+            examSources.map((source) => [
+              source.id,
+              source,
+            ]),
           ).values(),
         );
 
+        /*
+         * Exams without posts are evaluated directly
+         * against the exam-level eligibility rules.
+         */
         if (posts.length === 0) {
           const evaluation = evaluateEligibility(
             student,
             activeExamRules,
           );
 
-          const deadlines = await db.orm.public.ApplicationDeadline
-            .where({
-              examId: exam.id,
-            })
-            .all();
+          const deadlines =
+            await db.orm.public.ApplicationDeadline
+              .where({
+                examId: exam.id,
+              })
+              .all();
 
           const formattedDeadlines: EligibilityDeadline[] =
             deadlines.map((deadline) => {
-              const applicationStart = deadline.applicationStart
-                ? deadline.applicationStart.toString()
-                : null;
+              const applicationStart =
+                deadline.applicationStart
+                  ? deadline.applicationStart.toString()
+                  : null;
 
-              const applicationEnd = deadline.applicationEnd
-                ? deadline.applicationEnd.toString()
-                : null;
+              const applicationEnd =
+                deadline.applicationEnd
+                  ? deadline.applicationEnd.toString()
+                  : null;
 
               return {
                 id: deadline.id,
-                applicationUrl: deadline.applicationUrl,
-                status: calculateApplicationStatus(
-                  applicationStart,
-                  applicationEnd,
-                ),
+                applicationUrl:
+                  deadline.applicationUrl,
+                status:
+                  calculateApplicationStatus(
+                    applicationStart,
+                    applicationEnd,
+                  ),
                 applicationStart,
                 applicationEnd,
-                examDate: deadline.examDate
-                  ? deadline.examDate.toString()
-                  : null,
+                examDate:
+                  deadline.examDate
+                    ? deadline.examDate.toString()
+                    : null,
               };
             });
 
@@ -215,49 +230,66 @@ export async function eligibilityRoute(app: FastifyInstance) {
             exam: {
               id: exam.id,
               name: exam.name,
-              conductingBody: exam.conductingBody,
+              conductingBody:
+                exam.conductingBody,
               examType: exam.examType,
               description: exam.description,
-              officialWebsite: exam.officialWebsite,
+              officialWebsite:
+                exam.officialWebsite,
             },
             post: null,
-            eligible: evaluation.eligible,
-            reasons: evaluation.reasons,
-            sources: uniqueExamSources,
-            deadlines: formattedDeadlines,
+            eligible:
+              evaluation.eligible,
+            reasons:
+              evaluation.reasons,
+            sources:
+              uniqueExamSources,
+            deadlines:
+              formattedDeadlines,
           });
 
           if (evaluation.eligible) {
-            await createNewEligibleExamNotification({
-              userId,
-              examId: exam.id,
-              postId: null,
-              examName: exam.name,
-              postName: null,
-            });
+            await createNewEligibleExamNotification(
+              {
+                userId,
+                examId: exam.id,
+                postId: null,
+                examName: exam.name,
+                postName: null,
+              },
+            );
           }
 
           continue;
         }
 
+        /*
+         * Evaluate each post separately.
+         */
         for (const post of posts) {
-          const postRules = await db.orm.public.EligibilityRule
-            .where({
-              examId: exam.id,
-              postId: post.id,
-            })
-            .all();
+          const postRules =
+            await db.orm.public.EligibilityRule
+              .where({
+                examId: exam.id,
+                postId: post.id,
+              })
+              .all();
 
           const activePostRules: EligibilityRule[] = [];
           const postSources: EligibilitySource[] = [];
 
+          /*
+           * Load any explicitly stored post-level rules.
+           */
           for (const rule of postRules) {
-            const version = await db.orm.public.EligibilityRuleVersion
-              .where({
-                eligibilityRuleId: rule.id,
-                status: "ACTIVE",
-              })
-              .first();
+            const version =
+              await db.orm.public.EligibilityRuleVersion
+                .where({
+                  eligibilityRuleId:
+                    rule.id,
+                  status: "ACTIVE",
+                })
+                .first();
 
             if (!version) {
               continue;
@@ -265,36 +297,71 @@ export async function eligibilityRoute(app: FastifyInstance) {
 
             activePostRules.push({
               name: rule.name,
-              conditionField: version.conditionField,
-              operator: version.operator,
-              expectedValue: version.expectedValue,
+              conditionField:
+                version.conditionField,
+              operator:
+                version.operator,
+              expectedValue:
+                version.expectedValue,
             });
 
-            if (version.notificationSourceId) {
-              const source = await db.orm.public.NotificationSource
-                .where({
-                  id: version.notificationSourceId,
-                })
-                .first();
+            if (
+              version.notificationSourceId
+            ) {
+              const source =
+                await db.orm.public.NotificationSource
+                  .where({
+                    id: version.notificationSourceId,
+                  })
+                  .first();
 
               if (source) {
                 postSources.push({
                   id: source.id,
-                  organization: source.organization,
-                  notificationTitle: source.notificationTitle,
-                  notificationDate: source.notificationDate
-                    ? source.notificationDate.toString()
-                    : null,
-                  officialUrl: source.officialUrl,
+                  organization:
+                    source.organization,
+                  notificationTitle:
+                    source.notificationTitle,
+                  notificationDate:
+                    source.notificationDate
+                      ? source.notificationDate.toString()
+                      : null,
+                  officialUrl:
+                    source.officialUrl,
                   notificationIdentifier:
                     source.notificationIdentifier,
-                  dateImported: source.dateImported.toString(),
-                  lastVerifiedAt: source.lastVerifiedAt
-                    ? source.lastVerifiedAt.toString()
-                    : null,
+                  dateImported:
+                    source.dateImported.toString(),
+                  lastVerifiedAt:
+                    source.lastVerifiedAt
+                      ? source.lastVerifiedAt.toString()
+                      : null,
                 });
               }
             }
+          }
+
+          /*
+           * IMPORTANT:
+           *
+           * Post.qualification is not an EligibilityRule row.
+           * Therefore this must be outside the postRules loop.
+           *
+           * Every post with a qualification gets a
+           * post-specific qualification requirement.
+           */
+          if (post.qualification) {
+            activePostRules.push({
+              name:
+                "Qualification Requirement",
+              conditionField:
+                "qualificationRequirement",
+              operator: "REQUIRED",
+              expectedValue:
+                post.qualification,
+              qualificationRequirement:
+                post.qualification,
+            });
           }
 
           const combinedRules = [
@@ -302,49 +369,62 @@ export async function eligibilityRoute(app: FastifyInstance) {
             ...activePostRules,
           ];
 
-          const evaluation = evaluateEligibility(
-            student,
-            combinedRules,
-          );
+          const evaluation =
+            evaluateEligibility(
+              student,
+              combinedRules,
+            );
 
-          let deadlines = await db.orm.public.ApplicationDeadline
-            .where({
-              examId: exam.id,
-              postId: post.id,
-            })
-            .all();
-
-          if (deadlines.length === 0) {
-            deadlines = await db.orm.public.ApplicationDeadline
+          let deadlines =
+            await db.orm.public.ApplicationDeadline
               .where({
                 examId: exam.id,
-                postId: null,
+                postId: post.id,
               })
               .all();
+
+          /*
+           * Backward compatibility:
+           * if no post-specific deadline exists,
+           * use the exam-level deadline.
+           */
+          if (deadlines.length === 0) {
+            deadlines =
+              await db.orm.public.ApplicationDeadline
+                .where({
+                  examId: exam.id,
+                  postId: null,
+                })
+                .all();
           }
 
           const formattedDeadlines: EligibilityDeadline[] =
             deadlines.map((deadline) => {
-              const applicationStart = deadline.applicationStart
-                ? deadline.applicationStart.toString()
-                : null;
+              const applicationStart =
+                deadline.applicationStart
+                  ? deadline.applicationStart.toString()
+                  : null;
 
-              const applicationEnd = deadline.applicationEnd
-                ? deadline.applicationEnd.toString()
-                : null;
+              const applicationEnd =
+                deadline.applicationEnd
+                  ? deadline.applicationEnd.toString()
+                  : null;
 
               return {
                 id: deadline.id,
-                applicationUrl: deadline.applicationUrl,
-                status: calculateApplicationStatus(
-                  applicationStart,
-                  applicationEnd,
-                ),
+                applicationUrl:
+                  deadline.applicationUrl,
+                status:
+                  calculateApplicationStatus(
+                    applicationStart,
+                    applicationEnd,
+                  ),
                 applicationStart,
                 applicationEnd,
-                examDate: deadline.examDate
-                  ? deadline.examDate.toString()
-                  : null,
+                examDate:
+                  deadline.examDate
+                    ? deadline.examDate.toString()
+                    : null,
               };
             });
 
@@ -355,7 +435,12 @@ export async function eligibilityRoute(app: FastifyInstance) {
 
           const uniqueSources = Array.from(
             new Map(
-              combinedSources.map((source) => [source.id, source]),
+              combinedSources.map(
+                (source) => [
+                  source.id,
+                  source,
+                ],
+              ),
             ).values(),
           );
 
@@ -363,10 +448,12 @@ export async function eligibilityRoute(app: FastifyInstance) {
             exam: {
               id: exam.id,
               name: exam.name,
-              conductingBody: exam.conductingBody,
+              conductingBody:
+                exam.conductingBody,
               examType: exam.examType,
               description: exam.description,
-              officialWebsite: exam.officialWebsite,
+              officialWebsite:
+                exam.officialWebsite,
             },
             post: {
               id: post.id,
@@ -374,20 +461,26 @@ export async function eligibilityRoute(app: FastifyInstance) {
               code: post.code,
               description: post.description,
             },
-            eligible: evaluation.eligible,
-            reasons: evaluation.reasons,
-            sources: uniqueSources,
-            deadlines: formattedDeadlines,
+            eligible:
+              evaluation.eligible,
+            reasons:
+              evaluation.reasons,
+            sources:
+              uniqueSources,
+            deadlines:
+              formattedDeadlines,
           });
 
           if (evaluation.eligible) {
-            await createNewEligibleExamNotification({
-              userId,
-              examId: exam.id,
-              postId: post.id,
-              examName: exam.name,
-              postName: post.name,
-            });
+            await createNewEligibleExamNotification(
+              {
+                userId,
+                examId: exam.id,
+                postId: post.id,
+                examName: exam.name,
+                postName: post.name,
+              },
+            );
           }
         }
       }
@@ -398,3 +491,4 @@ export async function eligibilityRoute(app: FastifyInstance) {
     },
   );
 }
+
