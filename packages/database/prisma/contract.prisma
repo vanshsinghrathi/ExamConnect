@@ -131,24 +131,27 @@ post Post? @relation(fields: [postId], references: [id])
 }
 
 model EligibilityRuleVersion {
-id                   Int      @id @default(autoincrement())
-eligibilityRuleId    Int
-notificationSourceId Int?
-versionNumber        Int
-status               String
-conditionField       String
-operator             String
-expectedValue        String
-effectiveFrom        DateTime?
-effectiveTo          DateTime?
-createdAt            DateTime @default(now())
-updatedAt            DateTime
+  id                   Int      @id @default(autoincrement())
+  eligibilityRuleId    Int
+  notificationSourceId Int?
+  versionNumber        Int
+  status               String
+  conditionField       String
+  operator             String
+  expectedValue        String
+  logicGroup           String?
+  logicOperator        String   @default("AND")
+  effectiveFrom        DateTime?
+  effectiveTo          DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime
 
-eligibilityRule    EligibilityRule     @relation(fields: [eligibilityRuleId], references: [id])
-notificationSource NotificationSource? @relation(fields: [notificationSourceId], references: [id])
+  eligibilityRule    EligibilityRule     @relation(fields: [eligibilityRuleId], references: [id])
+  notificationSource NotificationSource? @relation(fields: [notificationSourceId], references: [id])
 
-@@index([eligibilityRuleId])
-@@index([notificationSourceId])
+  @@index([eligibilityRuleId])
+  @@index([notificationSourceId])
+  @@index([logicGroup])
 }
 
 model NotificationSource {

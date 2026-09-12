@@ -24,25 +24,33 @@ const educationSchema = z.object({
   stream: z.string().trim().max(100).optional(),
 });
 
-const educationUpdateSchema = educationSchema.partial();
+const educationUpdateSchema =
+  educationSchema.partial();
 
-export async function studentRoute(app: FastifyInstance) {
+export async function studentRoute(
+  app: FastifyInstance,
+) {
+  /*
+   * GET STUDENT PROFILE
+   */
   app.get(
     "/student/profile",
     {
       preHandler: requireAuth,
     },
     async (request, reply) => {
-      const profile = await db.orm.public.StudentProfile
-        .where({
-          userId: request.authUser!.id,
-        })
-        .first();
+      const profile =
+        await db.orm.public.StudentProfile
+          .where({
+            userId: request.authUser!.id,
+          })
+          .first();
 
       if (!profile) {
         return reply.code(404).send({
           error: "PROFILE_NOT_FOUND",
-          message: "Student profile has not been created yet.",
+          message:
+            "Student profile has not been created yet.",
         });
       }
 
@@ -52,55 +60,77 @@ export async function studentRoute(app: FastifyInstance) {
     },
   );
 
+  /*
+   * CREATE / UPDATE STUDENT PROFILE
+   */
   app.put(
     "/student/profile",
     {
       preHandler: requireAuth,
     },
     async (request, reply) => {
-      const parsed = profileSchema.safeParse(request.body);
+      const parsed =
+        profileSchema.safeParse(
+          request.body,
+        );
 
       if (!parsed.success) {
         return reply.code(400).send({
           error: "INVALID_INPUT",
-          message: "Invalid student profile data.",
+          message:
+            "Invalid student profile data.",
         });
       }
 
-      const userId = request.authUser!.id;
+      const userId =
+        request.authUser!.id;
 
-      const existingProfile = await db.orm.public.StudentProfile
-        .where({
-          userId,
-        })
-        .first();
+      const existingProfile =
+        await db.orm.public.StudentProfile
+          .where({
+            userId,
+          })
+          .first();
 
       const data = {
         userId,
-        firstName: parsed.data.firstName,
-        lastName: parsed.data.lastName,
-        dateOfBirth: parsed.data.dateOfBirth
-          ? Temporal.Instant.from(parsed.data.dateOfBirth)
-          : undefined,
-        gender: parsed.data.gender,
-        state: parsed.data.state,
-        category: parsed.data.category,
-        updatedAt: Temporal.Now.instant(),
+        firstName:
+          parsed.data.firstName,
+        lastName:
+          parsed.data.lastName,
+        dateOfBirth:
+          parsed.data.dateOfBirth
+            ? Temporal.Instant.from(
+                parsed.data.dateOfBirth,
+              )
+            : undefined,
+        gender:
+          parsed.data.gender,
+        state:
+          parsed.data.state,
+        category:
+          parsed.data.category,
+        updatedAt:
+          Temporal.Now.instant(),
       };
 
       if (!existingProfile) {
-        const profile = await db.orm.public.StudentProfile.create(data);
+        const profile =
+          await db.orm.public.StudentProfile.create(
+            data,
+          );
 
         return reply.code(201).send({
           profile,
         });
       }
 
-      const profile = await db.orm.public.StudentProfile
-        .where({
-          id: existingProfile.id,
-        })
-        .update(data);
+      const profile =
+        await db.orm.public.StudentProfile
+          .where({
+            id: existingProfile.id,
+          })
+          .update(data);
 
       return reply.send({
         profile,
@@ -108,30 +138,37 @@ export async function studentRoute(app: FastifyInstance) {
     },
   );
 
+  /*
+   * GET EDUCATION RECORDS
+   */
   app.get(
     "/student/education",
     {
       preHandler: requireAuth,
     },
     async (request, reply) => {
-      const profile = await db.orm.public.StudentProfile
-        .where({
-          userId: request.authUser!.id,
-        })
-        .first();
+      const profile =
+        await db.orm.public.StudentProfile
+          .where({
+            userId: request.authUser!.id,
+          })
+          .first();
 
       if (!profile) {
         return reply.code(404).send({
           error: "PROFILE_NOT_FOUND",
-          message: "Student profile not found.",
+          message:
+            "Student profile not found.",
         });
       }
 
-      const records = await db.orm.public.EducationRecord
-        .where({
-          studentProfileId: profile.id,
-        })
-        .all();
+      const records =
+        await db.orm.public.EducationRecord
+          .where({
+            studentProfileId:
+              profile.id,
+          })
+          .all();
 
       return reply.send({
         education: records,
@@ -139,45 +176,68 @@ export async function studentRoute(app: FastifyInstance) {
     },
   );
 
+  /*
+   * ADD EDUCATION RECORD
+   */
   app.post(
     "/student/education",
     {
       preHandler: requireAuth,
     },
     async (request, reply) => {
-      const parsed = educationSchema.safeParse(request.body);
+      const parsed =
+        educationSchema.safeParse(
+          request.body,
+        );
 
       if (!parsed.success) {
         return reply.code(400).send({
           error: "INVALID_INPUT",
-          message: "Invalid education data.",
+          message:
+            "Invalid education data.",
         });
       }
 
-      const profile = await db.orm.public.StudentProfile
-        .where({
-          userId: request.authUser!.id,
-        })
-        .first();
+      const profile =
+        await db.orm.public.StudentProfile
+          .where({
+            userId: request.authUser!.id,
+          })
+          .first();
 
       if (!profile) {
         return reply.code(404).send({
           error: "PROFILE_NOT_FOUND",
-          message: "Create your student profile first.",
+          message:
+            "Create your student profile first.",
         });
       }
 
-      const record = await db.orm.public.EducationRecord.create({
-        studentProfileId: profile.id,
-        qualification: parsed.data.qualification,
-        courseName: parsed.data.courseName,
-        institutionName: parsed.data.institutionName,
-        boardOrUniversity: parsed.data.boardOrUniversity,
-        passingYear: parsed.data.passingYear,
-        percentage: parsed.data.percentage,
-        stream: parsed.data.stream,
-        updatedAt: Temporal.Now.instant(),
-      });
+      const record =
+        await db.orm.public.EducationRecord.create(
+          {
+            studentProfileId:
+              profile.id,
+            qualification:
+              parsed.data.qualification,
+            courseName:
+              parsed.data.courseName,
+            institutionName:
+              parsed.data
+                .institutionName,
+            boardOrUniversity:
+              parsed.data
+                .boardOrUniversity,
+            passingYear:
+              parsed.data.passingYear,
+            percentage:
+              parsed.data.percentage,
+            stream:
+              parsed.data.stream,
+            updatedAt:
+              Temporal.Now.instant(),
+          },
+        );
 
       return reply.code(201).send({
         education: record,
@@ -185,65 +245,87 @@ export async function studentRoute(app: FastifyInstance) {
     },
   );
 
+  /*
+   * UPDATE EDUCATION RECORD
+   */
   app.put(
     "/student/education/:id",
     {
       preHandler: requireAuth,
     },
     async (request, reply) => {
-      const id = Number((request.params as { id: string }).id);
+      const id = Number(
+        (request.params as {
+          id: string;
+        }).id,
+      );
 
-      if (!Number.isInteger(id) || id <= 0) {
+      if (
+        !Number.isInteger(id) ||
+        id <= 0
+      ) {
         return reply.code(400).send({
           error: "INVALID_ID",
-          message: "Education record ID must be a positive integer.",
+          message:
+            "Education record ID must be a positive integer.",
         });
       }
 
-      const parsed = educationUpdateSchema.safeParse(request.body);
+      const parsed =
+        educationUpdateSchema.safeParse(
+          request.body,
+        );
 
       if (!parsed.success) {
         return reply.code(400).send({
           error: "INVALID_INPUT",
-          message: "Invalid education data.",
+          message:
+            "Invalid education data.",
         });
       }
 
-      const profile = await db.orm.public.StudentProfile
-        .where({
-          userId: request.authUser!.id,
-        })
-        .first();
+      const profile =
+        await db.orm.public.StudentProfile
+          .where({
+            userId: request.authUser!.id,
+          })
+          .first();
 
       if (!profile) {
         return reply.code(404).send({
           error: "PROFILE_NOT_FOUND",
-          message: "Student profile not found.",
+          message:
+            "Student profile not found.",
         });
       }
 
-      const record = await db.orm.public.EducationRecord
-        .where({
-          id,
-          studentProfileId: profile.id,
-        })
-        .first();
+      const record =
+        await db.orm.public.EducationRecord
+          .where({
+            id,
+            studentProfileId:
+              profile.id,
+          })
+          .first();
 
       if (!record) {
         return reply.code(404).send({
           error: "EDUCATION_NOT_FOUND",
-          message: "Education record not found.",
+          message:
+            "Education record not found.",
         });
       }
 
-      const updated = await db.orm.public.EducationRecord
-        .where({
-          id: record.id,
-        })
-        .update({
-          ...parsed.data,
-          updatedAt: Temporal.Now.instant(),
-        });
+      const updated =
+        await db.orm.public.EducationRecord
+          .where({
+            id: record.id,
+          })
+          .update({
+            ...parsed.data,
+            updatedAt:
+              Temporal.Now.instant(),
+          });
 
       return reply.send({
         education: updated,
@@ -251,57 +333,102 @@ export async function studentRoute(app: FastifyInstance) {
     },
   );
 
+  /*
+   * DELETE EDUCATION RECORD
+   */
   app.delete(
     "/student/education/:id",
     {
       preHandler: requireAuth,
     },
     async (request, reply) => {
-      const id = Number((request.params as { id: string }).id);
+      const id = Number(
+        (request.params as {
+          id: string;
+        }).id,
+      );
 
-      if (!Number.isInteger(id) || id <= 0) {
+      if (
+        !Number.isInteger(id) ||
+        id <= 0
+      ) {
         return reply.code(400).send({
           error: "INVALID_ID",
-          message: "Education record ID must be a positive integer.",
+          message:
+            "Education record ID must be a positive integer.",
         });
       }
 
-      const profile = await db.orm.public.StudentProfile
-        .where({
-          userId: request.authUser!.id,
-        })
-        .first();
+      try {
+        /*
+         * Find the logged-in student's profile.
+         */
+        const profile =
+          await db.orm.public.StudentProfile
+            .where({
+              userId:
+                request.authUser!.id,
+            })
+            .first();
 
-      if (!profile) {
-        return reply.code(404).send({
-          error: "PROFILE_NOT_FOUND",
-          message: "Student profile not found.",
+        if (!profile) {
+          return reply.code(404).send({
+            error: "PROFILE_NOT_FOUND",
+            message:
+              "Student profile not found.",
+          });
+        }
+
+        /*
+         * IMPORTANT:
+         * The education record must belong to
+         * the current student's profile.
+         */
+        const record =
+          await db.orm.public.EducationRecord
+            .where({
+              id,
+              studentProfileId:
+                profile.id,
+            })
+            .first();
+
+        if (!record) {
+          return reply.code(404).send({
+            error: "EDUCATION_NOT_FOUND",
+            message:
+              "Education record not found for this student.",
+          });
+        }
+
+        /*
+         * Delete the exact education record.
+         */
+        await db.orm.public.EducationRecord
+          .where({
+            id: record.id,
+          })
+          .delete();
+
+        return reply.send({
+          status: "ok",
+          message:
+            "Education record deleted successfully.",
+          deletedId: record.id,
+        });
+      } catch (deleteError) {
+        request.log.error(
+          deleteError,
+          "Failed to delete education record",
+        );
+
+        return reply.code(500).send({
+          error:
+            "EDUCATION_DELETE_FAILED",
+          message:
+            "Unable to delete education record.",
         });
       }
-
-      const record = await db.orm.public.EducationRecord
-        .where({
-          id,
-          studentProfileId: profile.id,
-        })
-        .first();
-
-      if (!record) {
-        return reply.code(404).send({
-          error: "EDUCATION_NOT_FOUND",
-          message: "Education record not found.",
-        });
-      }
-
-      await db.orm.public.EducationRecord
-        .where({
-          id: record.id,
-        })
-        .delete();
-
-      return reply.send({
-        status: "ok",
-      });
     },
   );
 }

@@ -1,5 +1,7 @@
 ﻿import Fastify from "fastify";
 import cookie from "@fastify/cookie";
+import cors from "@fastify/cors";
+
 import { adminNotificationSourceRoute } from "./admin-notification-sources.js";
 import { db } from "@examconnect/database";
 
@@ -16,31 +18,92 @@ import { adminExamRoute } from "./admin-exams.js";
 import { studentNotificationRoute } from "./student-notifications.js";
 
 const app = Fastify({
-logger: false,
+  logger: true,
 });
 
-const port = Number(process.env.PORT ?? 4000);
-const host = process.env.HOST ?? "127.0.0.1";
+const port = Number(
+  process.env.PORT ?? 4000,
+);
+
+const host =
+  process.env.HOST ?? "127.0.0.1";
+
+/*
+ * Development CORS configuration.
+ *
+ * Allows the Next.js frontend to call the
+ * API from either localhost or 127.0.0.1.
+ *
+ * credentials: true is required because
+ * authentication uses cookies.
+ */
+await app.register(cors, {
+  origin: (origin, callback) => {
+    /*
+     * Some requests such as curl/server-to-server
+     * requests may not send an Origin header.
+     */
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    const allowedOrigins = [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+    ];
+
+    if (
+      allowedOrigins.includes(origin)
+    ) {
+      callback(null, true);
+      return;
+    }
+
+    callback(
+      new Error(
+        `CORS origin not allowed: ${origin}`,
+      ),
+      false,
+    );
+  },
+
+  credentials: true,
+
+  methods: [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+  ],
+
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+  ],
+});
 
 // Enable cookie parsing and cookie management.
 await app.register(cookie);
 
 // Basic API health check.
 app.get("/health", async () => {
-return {
-status: "ok",
-service: "api",
-};
+  return {
+    status: "ok",
+    service: "api",
+  };
 });
 
 // Database health check.
 app.get("/health/db", async () => {
-await db.orm.public.User.all();
+  await db.orm.public.User.all();
 
-return {
-status: "ok",
-service: "database",
-};
+  return {
+    status: "ok",
+    service: "database",
+  };
 });
 
 // Authentication routes.
@@ -68,9 +131,12 @@ await adminNotificationSourceRoute(app);
 
 // Graceful shutdown.
 const shutdown = async () => {
-await db.close();
-await app.close();
-process.exit(0);
+  try {
+    await db.close();
+    await app.close();
+  } finally {
+    process.exit(0);
+  }
 };
 
 process.on("SIGINT", shutdown);
@@ -78,6 +144,6 @@ process.on("SIGTERM", shutdown);
 
 // Start the API server.
 await app.listen({
-port,
-host,
+  port,
+  host,
 });

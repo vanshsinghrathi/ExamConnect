@@ -1,0 +1,321 @@
+
+.page {
+  min-height: 100vh;
+  background: #f5f7fb;
+  padding: 40px 6% 70px;
+  color: #172033;
+}
+
+.header {
+  max-width: 1000px;
+  margin: 0 auto 30px;
+}
+
+.backButton {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin-bottom: 25px;
+  color: #68748a;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  margin-bottom: 10px;
+}
+
+.header h1 {
+  font-size: 40px;
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  max-width: 700px;
+  color: #68748a;
+  line-height: 1.7;
+}
+
+.card {
+  max-width: 1000px;
+  margin: 0 auto 24px;
+  padding: 30px;
+  border: 1px solid #e0e5ee;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(20, 31, 54, 0.05);
+}
+
+.cardHeader {
+  margin-bottom: 25px;
+}
+
+.cardEyebrow {
+  color: #7e889c;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  margin-bottom: 7px;
+}
+
+.cardHeader h2 {
+  font-size: 24px;
+}
+
+.form {
+  display: grid;
+  gap: 22px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.formGrid label {
+  display: grid;
+  gap: 8px;
+  color: #3b465a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.formGrid input,
+.formGrid select {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid #d8deea;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #172033;
+  font: inherit;
+  outline: none;
+}
+
+.formGrid input:focus,
+.formGrid select:focus {
+  border-color: #172033;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.primaryButton {
+  width: fit-content;
+  border: 0;
+  padding: 12px 18px;
+  border-radius: 10px;
+  background: #172033;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.successMessage,
+.errorMessage {
+  max-width: 1000px;
+  margin: 0 auto 18px;
+  padding: 12px 15px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.successMessage {
+  background: #e9f8ef;
+  color: #19713d;
+}
+
+.errorMessage {
+  background: #fcecec;
+  color: #a33e3e;
+}
+
+.educationList {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.educationItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 18px;
+  border: 1px solid #e5e9f0;
+  border-radius: 14px;
+  background: #fafbfc;
+}
+
+.educationItem h3 {
+  margin-bottom: 7px;
+  font-size: 17px;
+}
+
+.educationItem p {
+  margin-top: 4px;
+  color: #68748a;
+  font-size: 13px;
+}
+
+.deleteButton {
+  border: 1px solid #edcccc;
+  padding: 8px 11px;
+  border-radius: 8px;
+  background: #fff7f7;
+  color: #a33e3e;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.addEducationTitle {
+  font-size: 18px;
+  margin-bottom: 2px;
+}
+
+.actionCard {
+  max-width: 1000px;
+  margin: 30px auto 0;
+  padding: 26px 30px;
+  border-radius: 20px;
+  background: #172033;
+  color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.actionCard h2 {
+  font-size: 21px;
+  margin-bottom: 7px;
+}
+
+.actionCard p {
+  color: #c2c9d6;
+  font-size: 13px;
+}
+
+.actionCard .primaryButton {
+  background: #ffffff;
+  color: #172033;
+  flex-shrink: 0;
+}
+
+.loadingCard {
+  max-width: 600px;
+  margin: 100px auto;
+  padding: 30px;
+  border: 1px solid #e0e5ee;
+  border-radius: 20px;
+  background: #ffffff;
+  text-align: center;
+  color: #68748a;
+}
+
+@media (max-width: 700px) {
+  .page {
+    padding: 25px 16px 50px;
+  }
+
+  .header h1 {
+    font-size: 32px;
+  }
+
+  .card {
+    padding: 22px 18px;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .fullWidth {
+    grid-column: auto;
+  }
+
+  .actionCard {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 24px 20px;
+  }
+
+  .actionCard .primaryButton {
+    width: 100%;
+  }
+
+  .educationItem {
+    flex-direction: column;
+  }
+
+  .deleteButton {
+    width: 100%;
+  }
+}
+.educationActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.editButton {
+  border: 1px solid #d8deea;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172033;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.editButton:hover {
+  background: #f5f7fb;
+}
+
+.editButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.educationFormActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cancelButton {
+  border: 1px solid #d8deea;
+  padding: 10px 15px;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cancelButton:hover {
+  background: #f5f7fb;
+}
+
+.cancelButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

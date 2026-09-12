@@ -1,0 +1,372 @@
+.page {
+  min-height: 100vh;
+  padding: 36px;
+  background: #f7f8fb;
+  color: #172033;
+}
+
+.header {
+  max-width: 1100px;
+  margin: 0 auto 28px;
+}
+
+.backButton {
+  border: 1px solid #d8deea;
+  padding: 9px 13px;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.backButton:hover {
+  background: #f5f7fb;
+}
+
+.eyebrow {
+  margin: 20px 0 7px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #667085;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.15;
+}
+
+.organization {
+  margin: 10px 0 0;
+  color: #667085;
+  font-size: 15px;
+}
+
+.headerMeta {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.headerMeta span {
+  border: 1px solid #d8deea;
+  border-radius: 999px;
+  padding: 7px 11px;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.infoGrid {
+  max-width: 1100px;
+  margin: 0 auto 30px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.infoCard,
+.textCard,
+.postCard,
+.deadlineCard,
+.sourceCard,
+.ineligibleCard,
+.errorCard {
+  background: #ffffff;
+  border: 1px solid #e3e7ef;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(23, 32, 51, 0.04);
+}
+
+.infoCard {
+  padding: 18px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 7px;
+  color: #667085;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.infoCard strong {
+  font-size: 18px;
+}
+
+.section {
+  max-width: 1100px;
+  margin: 0 auto 32px;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  margin-bottom: 14px;
+  gap: 15px;
+}
+
+.sectionHeader .eyebrow {
+  margin: 0 0 6px;
+}
+
+.sectionHeader h2 {
+  margin: 0;
+  font-size: 23px;
+}
+
+.countBadge {
+  min-width: 32px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #eef5ff;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.textCard {
+  padding: 22px;
+}
+
+.textCard p,
+.descriptionBox p,
+.postCard p,
+.deadlineCard p,
+.sourceCard p,
+.ineligibleCard p {
+  margin: 5px 0;
+  color: #596579;
+  line-height: 1.6;
+}
+
+.postGrid {
+  display: grid;
+  gap: 16px;
+}
+
+.postCard {
+  padding: 22px;
+}
+
+.postHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.postHeader h3,
+.deadlineCard h3,
+.sourceCard h3,
+.ineligibleCard h3 {
+  margin: 10px 0 0;
+  font-size: 19px;
+}
+
+.eligibleBadge {
+  display: inline-block;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eaf8ef;
+  color: #18864b;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.postCode {
+  padding: 6px 9px;
+  height: fit-content;
+  border-radius: 7px;
+  background: #f3f5f8;
+  color: #667085;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.detailGrid {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.descriptionBox,
+.reasonsBox {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #edf0f4;
+}
+
+.reasonsBox {
+  padding-bottom: 2px;
+}
+
+.reason {
+  margin: 7px 0 !important;
+  color: #18864b !important;
+  font-weight: 700;
+}
+
+.ineligibleList,
+.deadlineList,
+.sourceList {
+  display: grid;
+  gap: 12px;
+}
+
+.ineligibleCard,
+.deadlineCard,
+.sourceCard {
+  padding: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+}
+
+.notEligibleBadge {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #fff0f0;
+  color: #c83d3d;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.statusOpen {
+  background: #eaf8ef;
+  color: #18864b;
+}
+
+.statusUpcoming {
+  background: #fff5df;
+  color: #a46a00;
+}
+
+.statusClosed {
+  background: #f1f2f4;
+  color: #68707c;
+}
+
+.statusUnknown {
+  background: #eef0f3;
+  color: #68707c;
+}
+
+.applyButton,
+.sourceButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 13px;
+  border-radius: 9px;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.applyButton {
+  background: #172033;
+  color: #ffffff;
+}
+
+.sourceButton {
+  border: 1px solid #d8deea;
+  background: #ffffff;
+  color: #172033;
+}
+
+.applyButton:hover {
+  opacity: 0.92;
+}
+
+.sourceButton:hover {
+  background: #f5f7fb;
+}
+
+.bottomAction {
+  max-width: 1100px;
+  margin: 10px auto 0;
+  padding-top: 22px;
+  border-top: 1px solid #e3e7ef;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.loadingCard,
+.errorCard,
+.emptyCard {
+  max-width: 1100px;
+  margin: 60px auto;
+  padding: 28px;
+  text-align: center;
+}
+
+.loadingCard {
+  background: #ffffff;
+  border: 1px solid #e3e7ef;
+  border-radius: 14px;
+}
+
+.errorCard h1 {
+  margin: 20px 0 10px;
+}
+
+@media (max-width: 800px) {
+  .page {
+    padding: 20px;
+  }
+
+  .infoGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .fullWidth {
+    grid-column: auto;
+  }
+
+  .ineligibleCard,
+  .deadlineCard,
+  .sourceCard,
+  .bottomAction {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 520px) {
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .header h1 {
+    font-size: 28px;
+  }
+}

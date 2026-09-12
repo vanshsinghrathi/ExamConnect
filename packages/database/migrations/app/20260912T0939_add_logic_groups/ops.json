@@ -1,0 +1,125 @@
+[
+  {
+    "id": "column.public.eligibilityRuleVersion.logicGroup",
+    "label": "Add column \"logicGroup\" to \"eligibilityRuleVersion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "logicGroup",
+        "table": "eligibilityRuleVersion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"logicGroup\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "eligibilityRuleVersion",
+          "logicGroup"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"logicGroup\"",
+        "sql": "ALTER TABLE \"public\".\"eligibilityRuleVersion\" ADD COLUMN \"logicGroup\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"logicGroup\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "eligibilityRuleVersion",
+          "logicGroup"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.eligibilityRuleVersion.logicOperator",
+    "label": "Add column \"logicOperator\" to \"eligibilityRuleVersion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "logicOperator",
+        "table": "eligibilityRuleVersion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"logicOperator\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "eligibilityRuleVersion",
+          "logicOperator"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"logicOperator\"",
+        "sql": "ALTER TABLE \"public\".\"eligibilityRuleVersion\" ADD COLUMN \"logicOperator\" text DEFAULT 'AND' NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"logicOperator\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "eligibilityRuleVersion",
+          "logicOperator"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.eligibilityRuleVersion.eligibilityRuleVersion_logicGroup_idx_ad3c83d0",
+    "label": "Create index \"eligibilityRuleVersion_logicGroup_idx_ad3c83d0\" on \"eligibilityRuleVersion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "eligibilityRuleVersion_logicGroup_idx_ad3c83d0",
+        "table": "eligibilityRuleVersion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"eligibilityRuleVersion_logicGroup_idx_ad3c83d0\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"eligibilityRuleVersion_logicGroup_idx_ad3c83d0\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"eligibilityRuleVersion_logicGroup_idx_ad3c83d0\"",
+        "sql": "CREATE INDEX \"eligibilityRuleVersion_logicGroup_idx_ad3c83d0\" ON \"public\".\"eligibilityRuleVersion\" (\"logicGroup\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"eligibilityRuleVersion_logicGroup_idx_ad3c83d0\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"eligibilityRuleVersion_logicGroup_idx_ad3c83d0\""
+        ]
+      }
+    ]
+  }
+]

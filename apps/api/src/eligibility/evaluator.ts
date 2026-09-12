@@ -1,4 +1,3 @@
-
 import { Temporal } from "@js-temporal/polyfill";
 
 export type EligibilityStudent = {
@@ -7,6 +6,7 @@ export type EligibilityStudent = {
     state: string | null;
     dateOfBirth: string | null;
   };
+
   education: Array<{
     qualification: string;
     percentage: number | null;
@@ -21,6 +21,8 @@ export type EligibilityRule = {
   operator: string;
   expectedValue: string;
   qualificationRequirement?: string | null;
+  logicGroup?: string | null;
+  logicOperator?: string | null;
 };
 
 export type EligibilityResult = {
@@ -62,7 +64,24 @@ function normalizeQualification(
 
     bvoc: "bvoc",
     "b voc": "bvoc",
-    "bachelor of vocational studies": "bvoc",
+    "bachelor of vocational studies":
+      "bvoc",
+
+    ma: "ma",
+    "m a": "ma",
+    "master of arts": "ma",
+
+    msc: "msc",
+    "m sc": "msc",
+    "master of science": "msc",
+
+    mcom: "mcom",
+    "m com": "mcom",
+    "master of commerce": "mcom",
+
+    mtech: "mtech",
+    "m tech": "mtech",
+    "master of technology": "mtech",
   };
 
   return aliases[normalized] ?? normalized;
@@ -141,11 +160,14 @@ function calculateAge(
   const targetDate = asOfDate
     ? Temporal.PlainDate.from(asOfDate)
     : Temporal.Now
-        .zonedDateTimeISO("Asia/Kolkata")
+        .zonedDateTimeISO(
+          "Asia/Kolkata",
+        )
         .toPlainDate();
 
   let age =
-    targetDate.year - birthDate.year;
+    targetDate.year -
+    birthDate.year;
 
   const birthdayOnTargetDate =
     birthDate.add({
@@ -175,10 +197,6 @@ function qualificationSatisfiesRequirement(
       .replace(/\s+/g, " ")
       .trim();
 
-  /*
-   * Subject aliases used in government
-   * qualification descriptions.
-   */
   const subjectAliases: Record<
     string,
     string[]
@@ -220,21 +238,18 @@ function qualificationSatisfiesRequirement(
     ],
   };
 
-  /*
-   * Identify subjects present in the
-   * official requirement.
-   */
-  const requiredSubjects = Object.entries(
-    subjectAliases,
-  )
-    .filter(([, aliases]) =>
-      aliases.some((alias) =>
-        normalizedRequirement.includes(
-          alias,
-        ),
-      ),
+  const requiredSubjects =
+    Object.entries(
+      subjectAliases,
     )
-    .map(([subject]) => subject);
+      .filter(([, aliases]) =>
+        aliases.some((alias) =>
+          normalizedRequirement.includes(
+            alias,
+          ),
+        ),
+      )
+      .map(([subject]) => subject);
 
   return education.some((item) => {
     const qualification =
@@ -257,11 +272,8 @@ function qualificationSatisfiesRequirement(
     const studentText =
       `${qualification} ${stream}`.trim();
 
-    /*
-     * Determine the student's degree level.
-     */
     const studentHasMasters =
-      /\b(m sc|msc|master of science|master|post graduate|postgraduate)\b/i.test(
+      /\b(m sc|msc|master of science|master|post graduate|postgraduate|mtech|m tech|master of technology|ma|m a|master of arts|mcom|m com|master of commerce)\b/i.test(
         studentText,
       );
 
@@ -270,11 +282,8 @@ function qualificationSatisfiesRequirement(
         studentText,
       );
 
-    /*
-     * Determine the degree level required.
-     */
     const requirementNeedsMasters =
-      /\b(master'?s degree|master of science|m sc|msc|master of)\b/i.test(
+      /\b(master'?s degree|master of science|m sc|msc|master of|mtech|m tech|ma|m a|mcom|m com)\b/i.test(
         normalizedRequirement,
       );
 
@@ -283,10 +292,6 @@ function qualificationSatisfiesRequirement(
         normalizedRequirement,
       );
 
-    /*
-     * Reject immediately when the student does not
-     * have the required degree level.
-     */
     if (
       requirementNeedsMasters &&
       !studentHasMasters
@@ -302,10 +307,6 @@ function qualificationSatisfiesRequirement(
       return false;
     }
 
-    /*
-     * Match student's stream to any subject required
-     * by the official notification.
-     */
     if (
       stream &&
       requiredSubjects.length > 0
@@ -324,10 +325,6 @@ function qualificationSatisfiesRequirement(
       }
     }
 
-    /*
-     * Match student's qualification itself to the
-     * required subject.
-     */
     if (
       requiredSubjects.length > 0
     ) {
@@ -345,11 +342,6 @@ function qualificationSatisfiesRequirement(
       }
     }
 
-    /*
-     * When the official requirement specifies only
-     * a degree level and no specific subject, accept
-     * a matching degree level.
-     */
     if (
       requiredSubjects.length === 0 &&
       requirementNeedsMasters &&
@@ -371,6 +363,509 @@ function qualificationSatisfiesRequirement(
   });
 }
 
+function findMatchingEducation(
+  student: EligibilityStudent,
+  requirement?: string | null,
+): EligibilityStudent["education"][number] | null {
+  if (!student.education.length) {
+    return null;
+  }
+
+  if (!requirement) {
+    return student.education[0];
+  }
+
+  for (const education of student.education) {
+    if (
+      qualificationSatisfiesRequirement(
+        [education],
+        requirement,
+      )
+    ) {
+      return education;
+    }
+  }
+
+  return student.education[0];
+}
+
+function formatEducation(
+  education:
+    | EligibilityStudent["education"][number]
+    | null,
+): string {
+  if (!education) {
+    return "No education record available";
+  }
+
+  const qualification =
+    education.qualification?.trim();
+
+  const stream =
+    education.stream?.trim();
+
+  if (
+    qualification &&
+    stream
+  ) {
+    return `${qualification} — ${stream}`;
+  }
+
+  return (
+    qualification ||
+    stream ||
+    "Education details not available"
+  );
+}
+
+function formatAgeRequirement(
+  expectedValue: string,
+): {
+  minAge: number | null;
+  maxAge: number | null;
+  asOfDate: string | null;
+} {
+  const match = expectedValue
+    .trim()
+    .match(
+      /^(\d+)\s*-\s*(\d+)(?:\s+as\s+of\s+(\d{4}-\d{2}-\d{2}))?$/i,
+    );
+
+  if (!match) {
+    return {
+      minAge: null,
+      maxAge: null,
+      asOfDate: null,
+    };
+  }
+
+  return {
+    minAge: Number(match[1]),
+    maxAge: Number(match[2]),
+    asOfDate: match[3] ?? null,
+  };
+}
+
+/*
+ * GENERIC CATEGORY NUMERIC RULE PARSER
+ *
+ * Supports:
+ *
+ * General:32,OBC:35,SC:37,ST:37,EWS:32
+ *
+ * General:60,OBC:55,SC:50,ST:50,EWS:55
+ *
+ * General:2027,OBC:2027,SC:2027,ST:2027,EWS:2027
+ */
+function parseCategoryNumericRequirement(
+  expectedValue: string,
+): Map<string, number> {
+  const requirements =
+    new Map<string, number>();
+
+  for (const item of expectedValue.split(",")) {
+    const trimmedItem =
+      item.trim();
+
+    if (!trimmedItem) {
+      continue;
+    }
+
+    const separatorIndex =
+      trimmedItem.indexOf(":");
+
+    if (separatorIndex === -1) {
+      continue;
+    }
+
+    const category =
+      normalizeText(
+        trimmedItem.slice(
+          0,
+          separatorIndex,
+        ),
+      );
+
+    const value = Number(
+      trimmedItem
+        .slice(
+          separatorIndex + 1,
+        )
+        .trim(),
+    );
+
+    if (
+      category &&
+      Number.isFinite(value)
+    ) {
+      requirements.set(
+        category,
+        value,
+      );
+    }
+  }
+
+  return requirements;
+}
+
+function formatRuleRequirement(
+  rule: EligibilityRule,
+): string {
+  return rule.expectedValue
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function buildSatisfiedReason(
+  student: EligibilityStudent,
+  rule: EligibilityRule,
+): string {
+  const {
+    conditionField,
+    operator,
+    expectedValue,
+  } = rule;
+
+  /*
+   * AGE
+   */
+  if (
+    conditionField === "age"
+  ) {
+    if (!student.profile.dateOfBirth) {
+      return `Requirement satisfied: ${rule.name}`;
+    }
+
+    /*
+     * CATEGORY-SPECIFIC AGE
+     */
+    if (
+      expectedValue.includes(":")
+    ) {
+      const category =
+        student.profile.category;
+
+      const age = calculateAge(
+        student.profile.dateOfBirth,
+      );
+
+      if (!category) {
+        return `Your age: ${age} years • Category not available`;
+      }
+
+      const categoryRules =
+        parseCategoryNumericRequirement(
+          expectedValue,
+        );
+
+      const maxAge =
+        categoryRules.get(
+          normalizeText(category),
+        );
+
+      if (maxAge !== undefined) {
+        return `Your age: ${age} years • Category: ${category} • Maximum allowed age: ${maxAge} years`;
+      }
+
+      return `Your age: ${age} years • Category: ${category} • No age rule found for this category`;
+    }
+
+    /*
+     * NORMAL AGE RULE
+     */
+    if (
+      operator.trim() === "BETWEEN"
+    ) {
+      const {
+        minAge,
+        maxAge,
+        asOfDate,
+      } = formatAgeRequirement(
+        expectedValue,
+      );
+
+      const age = calculateAge(
+        student.profile.dateOfBirth,
+        asOfDate ?? undefined,
+      );
+
+      if (
+        minAge !== null &&
+        maxAge !== null
+      ) {
+        return `Your age: ${age} years • Allowed age: ${minAge}-${maxAge} years${
+          asOfDate
+            ? ` as of ${asOfDate}`
+            : ""
+        }`;
+      }
+
+      return `Your age: ${age} years • Age requirement satisfied`;
+    }
+
+    const age = calculateAge(
+      student.profile.dateOfBirth,
+    );
+
+    return `Your age: ${age} years • Required: ${operator} ${expectedValue}`;
+  }
+
+  /*
+   * POST-SPECIFIC QUALIFICATION
+   */
+  if (
+    conditionField ===
+      "qualificationRequirement" &&
+    rule.qualificationRequirement
+  ) {
+    const matchingEducation =
+      findMatchingEducation(
+        student,
+        rule.qualificationRequirement,
+      );
+
+    const studentEducation =
+      formatEducation(
+        matchingEducation,
+      );
+
+    const required =
+      formatRuleRequirement(rule);
+
+    return `Your qualification: ${studentEducation} • Required: ${
+      required.length > 180
+        ? `${required.slice(0, 177)}...`
+        : required
+    }`;
+  }
+
+  /*
+   * STANDARD QUALIFICATION
+   */
+  if (
+    conditionField ===
+    "qualification"
+  ) {
+    const matchingEducation =
+      student.education.find(
+        (education) =>
+          normalizeQualification(
+            education.qualification,
+          ) ===
+          normalizeQualification(
+            expectedValue,
+          ),
+      ) ??
+      student.education[0] ??
+      null;
+
+    return `Your qualification: ${formatEducation(
+      matchingEducation,
+    )} • Required: ${expectedValue}`;
+  }
+
+  /*
+   * STREAM
+   */
+  if (
+    conditionField === "stream"
+  ) {
+    const matchingEducation =
+      student.education.find(
+        (education) =>
+          education.stream &&
+          compareText(
+            education.stream,
+            operator,
+            expectedValue,
+          ),
+      ) ??
+      student.education.find(
+        (education) =>
+          education.stream,
+      ) ??
+      null;
+
+    return `Your stream: ${
+      matchingEducation?.stream ??
+      "Not available"
+    } • Required: ${expectedValue}`;
+  }
+
+  /*
+   * PERCENTAGE
+   */
+  if (
+    conditionField ===
+    "percentage"
+  ) {
+    const matchingEducation =
+      student.education.find(
+        (education) =>
+          education.percentage !==
+          null,
+      ) ?? null;
+
+    const actual =
+      matchingEducation?.percentage;
+
+    /*
+     * CATEGORY-SPECIFIC PERCENTAGE
+     */
+    if (
+      expectedValue.includes(":")
+    ) {
+      const category =
+        student.profile.category;
+
+      if (
+        actual === null ||
+        actual === undefined
+      ) {
+        return `Percentage not available • Category: ${
+          category ?? "Not available"
+        }`;
+      }
+
+      if (!category) {
+        return `Your percentage: ${actual}% • Category not available`;
+      }
+
+      const categoryRules =
+        parseCategoryNumericRequirement(
+          expectedValue,
+        );
+
+      const minPercentage =
+        categoryRules.get(
+          normalizeText(category),
+        );
+
+      if (
+        minPercentage !==
+        undefined
+      ) {
+        return `Your percentage: ${actual}% • Category: ${category} • Minimum required: ${minPercentage}%`;
+      }
+
+      return `Your percentage: ${actual}% • Category: ${category} • No percentage rule found for this category`;
+    }
+
+    /*
+     * NORMAL PERCENTAGE
+     */
+    if (actual !== undefined) {
+      return `Your percentage: ${actual}% • Required: ${operator} ${expectedValue}%`;
+    }
+
+    return `Percentage requirement satisfied: ${operator} ${expectedValue}%`;
+  }
+
+  /*
+   * PASSING YEAR
+   */
+  if (
+    conditionField ===
+    "passingYear"
+  ) {
+    const matchingEducation =
+      student.education.find(
+        (education) =>
+          education.passingYear !==
+          null,
+      ) ?? null;
+
+    const actual =
+      matchingEducation?.passingYear;
+
+    /*
+     * CATEGORY-SPECIFIC PASSING YEAR
+     */
+    if (
+      expectedValue.includes(":")
+    ) {
+      const category =
+        student.profile.category;
+
+      if (
+        actual === null ||
+        actual === undefined
+      ) {
+        return `Passing year not available • Category: ${
+          category ?? "Not available"
+        }`;
+      }
+
+      if (!category) {
+        return `Your passing year: ${actual} • Category not available`;
+      }
+
+      const categoryRules =
+        parseCategoryNumericRequirement(
+          expectedValue,
+        );
+
+      const requiredPassingYear =
+        categoryRules.get(
+          normalizeText(category),
+        );
+
+      if (
+        requiredPassingYear !==
+        undefined
+      ) {
+        return `Your passing year: ${actual} • Category: ${category} • Required passing year: ${requiredPassingYear}`;
+      }
+
+      return `Your passing year: ${actual} • Category: ${category} • No passing year rule found for this category`;
+    }
+
+    /*
+     * NORMAL PASSING YEAR
+     */
+    if (actual !== undefined) {
+      return `Your passing year: ${actual} • Required: ${operator} ${expectedValue}`;
+    }
+
+    return `Passing year requirement satisfied: ${operator} ${expectedValue}`;
+  }
+
+  /*
+   * CATEGORY
+   */
+  if (
+    conditionField === "category"
+  ) {
+    return `Your category: ${
+      student.profile.category ??
+      "Not available"
+    } • Required: ${expectedValue}`;
+  }
+
+  /*
+   * STATE
+   */
+  if (
+    conditionField === "state"
+  ) {
+    return `Your state: ${
+      student.profile.state ??
+      "Not available"
+    } • Required: ${expectedValue}`;
+  }
+
+  /*
+   * FALLBACK
+   */
+  return `Requirement satisfied: ${rule.name}`;
+}
+
+function buildFailedReason(
+  rule: EligibilityRule,
+): string {
+  return `Requirement not satisfied: ${rule.name}`;
+}
+
 function evaluateRule(
   student: EligibilityStudent,
   rule: EligibilityRule,
@@ -382,7 +877,45 @@ function evaluateRule(
   } = rule;
 
   /*
-   * Age rules
+   * CATEGORY-SPECIFIC AGE
+   */
+  if (
+    conditionField ===
+    "ageByCategory"
+  ) {
+    if (!student.profile.dateOfBirth) {
+      return false;
+    }
+
+    if (!student.profile.category) {
+      return false;
+    }
+
+    const categoryRules =
+      parseCategoryNumericRequirement(
+        expectedValue,
+      );
+
+    const maxAge =
+      categoryRules.get(
+        normalizeText(
+          student.profile.category,
+        ),
+      );
+
+    if (maxAge === undefined) {
+      return false;
+    }
+
+    const age = calculateAge(
+      student.profile.dateOfBirth,
+    );
+
+    return age <= maxAge;
+  }
+
+  /*
+   * AGE
    */
   if (conditionField === "age") {
     if (!student.profile.dateOfBirth) {
@@ -390,10 +923,40 @@ function evaluateRule(
     }
 
     /*
-     * Supports:
-     *
-     * 21-32
-     * 21-32 as of 2027-01-01
+     * CATEGORY-SPECIFIC AGE
+     */
+    if (
+      expectedValue.includes(":")
+    ) {
+      if (!student.profile.category) {
+        return false;
+      }
+
+      const categoryRules =
+        parseCategoryNumericRequirement(
+          expectedValue,
+        );
+
+      const maxAge =
+        categoryRules.get(
+          normalizeText(
+            student.profile.category,
+          ),
+        );
+
+      if (maxAge === undefined) {
+        return false;
+      }
+
+      const age = calculateAge(
+        student.profile.dateOfBirth,
+      );
+
+      return age <= maxAge;
+    }
+
+    /*
+     * NORMAL AGE RULE
      */
     if (
       operator.trim() === "BETWEEN"
@@ -408,8 +971,12 @@ function evaluateRule(
         return false;
       }
 
-      const minAge = Number(match[1]);
-      const maxAge = Number(match[2]);
+      const minAge = Number(
+        match[1],
+      );
+      const maxAge = Number(
+        match[2],
+      );
       const asOfDate = match[3];
 
       const age = calculateAge(
@@ -423,13 +990,6 @@ function evaluateRule(
       );
     }
 
-    /*
-     * Existing numeric age rules:
-     *
-     * <= 32
-     * >= 21
-     * = 25
-     */
     const age = calculateAge(
       student.profile.dateOfBirth,
     );
@@ -451,7 +1011,7 @@ function evaluateRule(
   }
 
   /*
-   * Post-specific qualification requirement
+   * POST-SPECIFIC QUALIFICATION
    */
   if (
     conditionField ===
@@ -465,7 +1025,7 @@ function evaluateRule(
   }
 
   /*
-   * Standard education rules
+   * STANDARD EDUCATION RULES
    */
   if (
     conditionField === "qualification" ||
@@ -476,7 +1036,7 @@ function evaluateRule(
     return student.education.some(
       (education) => {
         /*
-         * Qualification
+         * QUALIFICATION
          */
         if (
           conditionField ===
@@ -520,7 +1080,7 @@ function evaluateRule(
         }
 
         /*
-         * Stream
+         * STREAM
          */
         if (
           conditionField ===
@@ -538,7 +1098,7 @@ function evaluateRule(
         }
 
         /*
-         * Percentage
+         * PERCENTAGE
          */
         if (
           conditionField ===
@@ -551,6 +1111,46 @@ function evaluateRule(
             return false;
           }
 
+          /*
+           * CATEGORY-SPECIFIC PERCENTAGE
+           */
+          if (
+            expectedValue.includes(":")
+          ) {
+            if (
+              !student.profile.category
+            ) {
+              return false;
+            }
+
+            const categoryRules =
+              parseCategoryNumericRequirement(
+                expectedValue,
+              );
+
+            const minPercentage =
+              categoryRules.get(
+                normalizeText(
+                  student.profile.category,
+                ),
+              );
+
+            if (
+              minPercentage ===
+              undefined
+            ) {
+              return false;
+            }
+
+            return (
+              education.percentage >=
+              minPercentage
+            );
+          }
+
+          /*
+           * NORMAL PERCENTAGE
+           */
           const expectedPercentage =
             Number(expectedValue);
 
@@ -570,7 +1170,7 @@ function evaluateRule(
         }
 
         /*
-         * Passing year
+         * PASSING YEAR
          */
         if (
           conditionField ===
@@ -583,6 +1183,46 @@ function evaluateRule(
             return false;
           }
 
+          /*
+           * CATEGORY-SPECIFIC PASSING YEAR
+           */
+          if (
+            expectedValue.includes(":")
+          ) {
+            if (
+              !student.profile.category
+            ) {
+              return false;
+            }
+
+            const categoryRules =
+              parseCategoryNumericRequirement(
+                expectedValue,
+              );
+
+            const requiredPassingYear =
+              categoryRules.get(
+                normalizeText(
+                  student.profile.category,
+                ),
+              );
+
+            if (
+              requiredPassingYear ===
+              undefined
+            ) {
+              return false;
+            }
+
+            return (
+              education.passingYear ===
+              requiredPassingYear
+            );
+          }
+
+          /*
+           * NORMAL PASSING YEAR
+           */
           const expectedPassingYear =
             Number(expectedValue);
 
@@ -607,7 +1247,7 @@ function evaluateRule(
   }
 
   /*
-   * Student profile rules
+   * CATEGORY
    */
   if (
     conditionField === "category"
@@ -625,6 +1265,9 @@ function evaluateRule(
     );
   }
 
+  /*
+   * STATE
+   */
   if (
     conditionField === "state"
   ) {
@@ -640,7 +1283,7 @@ function evaluateRule(
   }
 
   /*
-   * Unknown rule
+   * UNKNOWN RULE
    */
   return false;
 }
@@ -649,8 +1292,6 @@ export function evaluateEligibility(
   student: EligibilityStudent,
   rules: EligibilityRule[],
 ): EligibilityResult {
-  const reasons: string[] = [];
-
   if (rules.length === 0) {
     return {
       eligible: false,
@@ -660,36 +1301,188 @@ export function evaluateEligibility(
     };
   }
 
-  for (const rule of rules) {
-    const satisfied =
-      evaluateRule(
-        student,
-        rule,
-      );
-
-    if (satisfied) {
-      reasons.push(
-        `Requirement satisfied: ${rule.name}`,
-      );
-    } else {
-      reasons.push(
-        `Requirement not satisfied: ${rule.name}`,
-      );
-    }
-  }
-
-  const eligible =
-    reasons.length > 0 &&
-    reasons.every(
-      (reason) =>
-        reason.startsWith(
-          "Requirement satisfied:",
+  /*
+   * A post-specific qualification requirement
+   * is more specific than a generic qualification
+   * rule.
+   */
+  const hasQualificationRequirement =
+    rules.some(
+      (rule) =>
+        rule.conditionField ===
+          "qualificationRequirement" &&
+        Boolean(
+          rule.qualificationRequirement,
         ),
     );
 
+  /*
+   * Remove generic qualification rules when
+   * a specific post qualification exists.
+   */
+  const applicableRules =
+    rules.filter(
+      (rule) => {
+        if (
+          hasQualificationRequirement &&
+          rule.conditionField ===
+            "qualification"
+        ) {
+          return false;
+        }
+
+        return true;
+      },
+    );
+
+  /*
+   * Group rules.
+   *
+   * Rules with the same logicGroup are
+   * evaluated together.
+   *
+   * Rules without logicGroup are treated
+   * as individual AND conditions.
+   */
+  const groups = new Map<
+    string,
+    EligibilityRule[]
+  >();
+
+  for (let index = 0; index < applicableRules.length; index += 1) {
+    const rule =
+      applicableRules[index];
+
+    const groupName =
+      rule.logicGroup?.trim() ||
+      `__single_${index}`;
+
+    const existing =
+      groups.get(groupName) ??
+      [];
+
+    existing.push(rule);
+
+    groups.set(
+      groupName,
+      existing,
+    );
+  }
+
+  const reasons: string[] = [];
+  let allGroupsSatisfied = true;
+
+  for (const groupRules of groups.values()) {
+    const logicOperator =
+      (
+        groupRules[0]
+          ?.logicOperator ??
+        "AND"
+      )
+        .trim()
+        .toUpperCase();
+
+    const groupResults =
+      groupRules.map((rule) => {
+        const satisfied =
+          evaluateRule(
+            student,
+            rule,
+          );
+
+        return {
+          rule,
+          satisfied,
+        };
+      });
+
+    const groupSatisfied =
+      logicOperator === "OR"
+        ? groupResults.some(
+            (item) =>
+              item.satisfied,
+          )
+        : groupResults.every(
+            (item) =>
+              item.satisfied,
+          );
+
+    if (!groupSatisfied) {
+      allGroupsSatisfied = false;
+    }
+
+    /*
+     * OR GROUP
+     *
+     * Example:
+     *
+     * B.Sc Physics
+     * OR
+     * M.Sc Physics
+     */
+    if (
+      logicOperator === "OR"
+    ) {
+      const satisfiedRule =
+        groupResults.find(
+          (item) =>
+            item.satisfied,
+        );
+
+      if (satisfiedRule) {
+        reasons.push(
+          buildSatisfiedReason(
+            student,
+            satisfiedRule.rule,
+          ),
+        );
+      } else {
+        for (const item of groupResults) {
+          reasons.push(
+            buildFailedReason(
+              item.rule,
+            ),
+          );
+        }
+      }
+
+      continue;
+    }
+
+    /*
+     * AND GROUP
+     *
+     * Every rule must pass.
+     */
+    for (const item of groupResults) {
+      if (item.satisfied) {
+        reasons.push(
+          buildSatisfiedReason(
+            student,
+            item.rule,
+          ),
+        );
+      } else {
+        reasons.push(
+          buildFailedReason(
+            item.rule,
+          ),
+        );
+      }
+    }
+  }
+
+  if (reasons.length === 0) {
+    return {
+      eligible: false,
+      reasons: [
+        "No applicable eligibility requirements found.",
+      ],
+    };
+  }
+
   return {
-    eligible,
+    eligible: allGroupsSatisfied,
     reasons,
   };
 }
-
