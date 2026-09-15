@@ -916,7 +916,7 @@ export default function Home() {
                               result
                                 .deadlines
                                 .length >
-                                0,
+                              0,
                           )
                           .flatMap(
                             (result) =>

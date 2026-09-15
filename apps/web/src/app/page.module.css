@@ -251,11 +251,14 @@
   color: #ffffff;
   font-size: 13px;
   font-weight: 800;
-  transition: transform 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    background 0.2s ease;
 }
 
 .applyButton:hover {
   transform: translateY(-1px);
+  background: #24304a;
 }
 
 .sourceBox p {
@@ -377,6 +380,7 @@
     width: 100%;
   }
 }
+
 .authPage {
   min-height: 100vh;
   display: grid;
@@ -492,19 +496,66 @@
   font-size: 13px;
 }
 
+.profileButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 9px 13px;
+  border: 1px solid #d8deea;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #172033;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.profileButton:hover {
+  background: #f5f7fb;
+  border-color: #cbd2df;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(20, 31, 54, 0.06);
+}
+
+.profileButton:focus-visible {
+  outline: 2px solid #172033;
+  outline-offset: 2px;
+}
+
 .logoutButton {
   border: 1px solid #d8deea;
   padding: 9px 13px;
+  min-height: 38px;
   border-radius: 9px;
   background: #ffffff;
   color: #172033;
   font-size: 12px;
   font-weight: 800;
+  font-family: inherit;
   cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
 }
 
 .logoutButton:hover {
   background: #f5f7fb;
+  border-color: #cbd2df;
+  transform: translateY(-1px);
+}
+
+.logoutButton:focus-visible {
+  outline: 2px solid #172033;
+  outline-offset: 2px;
 }
 
 @media (max-width: 600px) {
@@ -521,6 +572,7 @@
     flex-direction: column;
   }
 }
+
 .postRow {
   display: flex;
   align-items: center;
@@ -538,6 +590,7 @@
   color: #253047 !important;
   font-weight: 700;
 }
+
 .detailsAction {
   margin-top: 18px;
   padding-top: 16px;
@@ -553,13 +606,21 @@
   color: #172033;
   font-size: 13px;
   font-weight: 800;
+  font-family: inherit;
   cursor: pointer;
   transition:
     background 0.2s ease,
-    border-color 0.2s ease;
+    border-color 0.2s ease,
+    transform 0.15s ease;
 }
 
 .detailsButton:hover {
   background: #f5f7fb;
   border-color: #cbd2df;
+  transform: translateY(-1px);
+}
+
+.detailsButton:focus-visible {
+  outline: 2px solid #172033;
+  outline-offset: 2px;
 }
