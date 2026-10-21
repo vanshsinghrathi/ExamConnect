@@ -197,10 +197,7 @@ function qualificationSatisfiesRequirement(
       .replace(/\s+/g, " ")
       .trim();
 
-  const subjectAliases: Record<
-    string,
-    string[]
-  > = {
+  const subjectAliases: Record<string, string[]> = {
     geology: [
       "geology",
       "geological science",
@@ -239,35 +236,50 @@ function qualificationSatisfiesRequirement(
   };
 
   const requiredSubjects =
-    Object.entries(
-      subjectAliases,
-    )
+    Object.entries(subjectAliases)
       .filter(([, aliases]) =>
         aliases.some((alias) =>
-          normalizedRequirement.includes(
-            alias,
-          ),
+          normalizedRequirement.includes(alias),
         ),
       )
       .map(([subject]) => subject);
 
+  const requirementNeedsScienceAndMaths =
+    (
+      /\bscience\b/i.test(normalizedRequirement) &&
+      /\b(mathematics|maths)\b/i.test(normalizedRequirement)
+    ) ||
+    /\bpcm\b/i.test(normalizedRequirement);
+
+  const requirementNeedsTwelve =
+    /\b(12th|class\s*xii|class\s*12|senior secondary|higher secondary|intermediate|10\+2|plus two|hsc)\b/i.test(
+      normalizedRequirement,
+    );
+
+  const requirementNeedsMasters =
+    /\b(master'?s degree|master of science|m sc|msc|master of|mtech|m tech|ma|m a|mcom|m com)\b/i.test(
+      normalizedRequirement,
+    );
+
+  const requirementNeedsBachelors =
+    /\b(bachelor'?s degree|bachelor of|b sc|bsc|b tech|btech|b voc|bvoc)\b/i.test(
+      normalizedRequirement,
+    );
+
   return education.some((item) => {
     const qualification =
-      normalizeText(
-        item.qualification,
-      )
+      normalizeText(item.qualification)
         .replace(/[.,()]/g, " ")
         .replace(/'/g, "")
         .replace(/\s+/g, " ")
         .trim();
 
-    const stream = normalizeText(
-      item.stream,
-    )
-      .replace(/[.,()]/g, " ")
-      .replace(/'/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
+    const stream =
+      normalizeText(item.stream)
+        .replace(/[.,()]/g, " ")
+        .replace(/'/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
 
     const studentText =
       `${qualification} ${stream}`.trim();
@@ -282,16 +294,51 @@ function qualificationSatisfiesRequirement(
         studentText,
       );
 
-    const requirementNeedsMasters =
-      /\b(master'?s degree|master of science|m sc|msc|master of|mtech|m tech|ma|m a|mcom|m com)\b/i.test(
-        normalizedRequirement,
+    // Identify Class 12 / Senior Secondary records.
+    const studentHasTwelve =
+      /\b(12th|class\s*xii|class\s*12|senior secondary|higher secondary|intermediate|10\+2|plus two|hsc)\b/i.test(
+        qualification,
       );
 
-    const requirementNeedsBachelors =
-      /\b(bachelor'?s degree|bachelor of|b sc|bsc|b tech|btech|b voc|bvoc)\b/i.test(
-        normalizedRequirement,
+    // Confirm Science + Mathematics specifically in Class 12.
+    const studentHasScienceAndMathsInTwelve =
+      studentHasTwelve &&
+      (
+        (
+          /\bscience\b/i.test(studentText) &&
+          /\b(mathematics|maths)\b/i.test(studentText)
+        ) ||
+        /\bpcm\b/i.test(studentText)
       );
 
+    /*
+     * SPECIAL REQUIREMENT:
+     * Class 12 Science with Mathematics.
+     *
+     * The student record must identify Class 12
+     * and the Science + Mathematics combination.
+     */
+    if (requirementNeedsScienceAndMaths) {
+      return studentHasScienceAndMathsInTwelve;
+    }
+
+    /*
+     * GENERAL CLASS 12 REQUIREMENT.
+     *
+     * A recorded Bachelor's/Master's qualification
+     * also implies completion of Class 12.
+     */
+    if (requirementNeedsTwelve) {
+      return (
+        studentHasTwelve ||
+        studentHasBachelors ||
+        studentHasMasters
+      );
+    }
+
+    /*
+     * MASTER'S REQUIREMENT.
+     */
     if (
       requirementNeedsMasters &&
       !studentHasMasters
@@ -299,6 +346,12 @@ function qualificationSatisfiesRequirement(
       return false;
     }
 
+    /*
+     * BACHELOR'S REQUIREMENT.
+     *
+     * A Master's degree also satisfies a
+     * general Bachelor's-level requirement.
+     */
     if (
       requirementNeedsBachelors &&
       !studentHasBachelors &&
@@ -307,13 +360,15 @@ function qualificationSatisfiesRequirement(
       return false;
     }
 
+    /*
+     * MATCH THE SUBJECT AGAINST THE STUDENT'S STREAM.
+     */
     if (
       stream &&
       requiredSubjects.length > 0
     ) {
       for (const subject of requiredSubjects) {
-        const aliases =
-          subjectAliases[subject];
+        const aliases = subjectAliases[subject];
 
         if (
           aliases.some((alias) =>
@@ -325,12 +380,12 @@ function qualificationSatisfiesRequirement(
       }
     }
 
-    if (
-      requiredSubjects.length > 0
-    ) {
+    /*
+     * MATCH THE SUBJECT AGAINST THE QUALIFICATION NAME.
+     */
+    if (requiredSubjects.length > 0) {
       for (const subject of requiredSubjects) {
-        const aliases =
-          subjectAliases[subject];
+        const aliases = subjectAliases[subject];
 
         if (
           aliases.some((alias) =>
@@ -342,6 +397,9 @@ function qualificationSatisfiesRequirement(
       }
     }
 
+    /*
+     * GENERAL MASTER'S REQUIREMENT WITHOUT A SPECIFIC SUBJECT.
+     */
     if (
       requiredSubjects.length === 0 &&
       requirementNeedsMasters &&
@@ -350,15 +408,23 @@ function qualificationSatisfiesRequirement(
       return true;
     }
 
+    /*
+     * GENERAL BACHELOR'S REQUIREMENT WITHOUT A SPECIFIC SUBJECT.
+     */
     if (
       requiredSubjects.length === 0 &&
       requirementNeedsBachelors &&
-      (studentHasBachelors ||
-        studentHasMasters)
+      (
+        studentHasBachelors ||
+        studentHasMasters
+      )
     ) {
       return true;
     }
 
+    /*
+     * No matching qualification found.
+     */
     return false;
   });
 }
@@ -507,6 +573,147 @@ function parseCategoryNumericRequirement(
 
   return requirements;
 }
+type CategoryAgeRange = {
+  minAge: number;
+  maxAge: number;
+};
+
+function normalizeAgeCategory(
+  category: string,
+): string {
+  const value = normalizeText(category)
+    .replace(/[^a-z0-9]/g, "");
+
+  if (
+    ["general", "unreserved", "ur"].includes(value)
+  ) {
+    return "general";
+  }
+
+  if (
+    [
+      "obc",
+      "obcncl",
+      "obcnoncreamylayer",
+      "otherbackwardclass",
+      "otherbackwardclasses",
+    ].includes(value)
+  ) {
+    return "obc";
+  }
+
+  if (
+    ["sc", "scheduledcaste", "scheduledcastes"].includes(
+      value,
+    )
+  ) {
+    return "sc";
+  }
+
+  if (
+    ["st", "scheduledtribe", "scheduledtribes"].includes(
+      value,
+    )
+  ) {
+    return "st";
+  }
+
+  if (
+    [
+      "ews",
+      "economicallyweakersection",
+      "economicallyweakersections",
+    ].includes(value)
+  ) {
+    return "ews";
+  }
+
+  return value;
+}
+
+function parseCategoryAgeRangeRequirement(
+  expectedValue: string,
+): {
+  ranges: Map<string, CategoryAgeRange>;
+  asOfDate: string | null;
+} {
+  const separatorIndex =
+    expectedValue.lastIndexOf("|");
+
+  const ranges =
+    new Map<string, CategoryAgeRange>();
+
+  if (separatorIndex === -1) {
+    return {
+      ranges,
+      asOfDate: null,
+    };
+  }
+
+  const asOfDate =
+    expectedValue
+      .slice(separatorIndex + 1)
+      .trim();
+
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(asOfDate) ||
+    Number.isNaN(
+      Date.parse(`${asOfDate}T00:00:00Z`),
+    )
+  ) {
+    return {
+      ranges,
+      asOfDate: null,
+    };
+  }
+
+  const rangeText =
+    expectedValue.slice(0, separatorIndex);
+
+  for (const item of rangeText.split(",")) {
+    const trimmedItem = item.trim();
+    const colonIndex = trimmedItem.indexOf(":");
+
+    if (colonIndex === -1) {
+      continue;
+    }
+
+    const category =
+      normalizeAgeCategory(
+        trimmedItem.slice(0, colonIndex),
+      );
+
+    const match =
+      trimmedItem
+        .slice(colonIndex + 1)
+        .trim()
+        .match(/^(\d+)\s*-\s*(\d+)$/);
+
+    if (!category || !match) {
+      continue;
+    }
+
+    const minAge = Number(match[1]);
+    const maxAge = Number(match[2]);
+
+    if (
+      Number.isInteger(minAge) &&
+      Number.isInteger(maxAge) &&
+      minAge >= 0 &&
+      maxAge >= minAge
+    ) {
+      ranges.set(category, {
+        minAge,
+        maxAge,
+      });
+    }
+  }
+
+  return {
+    ranges,
+    asOfDate,
+  };
+}
 
 function formatRuleRequirement(
   rule: EligibilityRule,
@@ -525,6 +732,50 @@ function buildSatisfiedReason(
     operator,
     expectedValue,
   } = rule;
+  /*
+   * CATEGORY-SPECIFIC AGE RANGE WITH CUTOFF DATE
+   */
+  if (conditionField === "ageByCategory") {
+    if (!student.profile.dateOfBirth) {
+      return "Date of birth is required to check age eligibility.";
+    }
+
+    if (!student.profile.category) {
+      return "Your category is missing, so age eligibility could not be checked.";
+    }
+
+    const { ranges, asOfDate } =
+      parseCategoryAgeRangeRequirement(
+        expectedValue,
+      );
+
+    if (!asOfDate) {
+      return "The age rule does not contain a valid cutoff date.";
+    }
+
+    const category =
+      student.profile.category;
+
+    const range =
+      ranges.get(
+        normalizeAgeCategory(category),
+      );
+
+    if (!range) {
+      return `No age range is configured for category ${category}.`;
+    }
+
+    const age = calculateAge(
+      student.profile.dateOfBirth,
+      asOfDate,
+    );
+
+    return (
+      `Your age on ${asOfDate}: ${age} years | ` +
+      `Allowed for ${category}: ` +
+      `${range.minAge}-${range.maxAge} years`
+    );
+  }
 
   /*
    * AGE
@@ -879,39 +1130,46 @@ function evaluateRule(
   /*
    * CATEGORY-SPECIFIC AGE
    */
-  if (
-    conditionField ===
-    "ageByCategory"
-  ) {
-    if (!student.profile.dateOfBirth) {
+  /*
+   * CATEGORY-SPECIFIC AGE RANGE WITH CUTOFF DATE
+   */
+  if (conditionField === "ageByCategory") {
+    if (
+      !student.profile.dateOfBirth ||
+      !student.profile.category
+    ) {
       return false;
     }
 
-    if (!student.profile.category) {
-      return false;
-    }
-
-    const categoryRules =
-      parseCategoryNumericRequirement(
+    const { ranges, asOfDate } =
+      parseCategoryAgeRangeRequirement(
         expectedValue,
       );
 
-    const maxAge =
-      categoryRules.get(
-        normalizeText(
+    if (!asOfDate) {
+      return false;
+    }
+
+    const range =
+      ranges.get(
+        normalizeAgeCategory(
           student.profile.category,
         ),
       );
 
-    if (maxAge === undefined) {
+    if (!range) {
       return false;
     }
 
     const age = calculateAge(
       student.profile.dateOfBirth,
+      asOfDate,
     );
 
-    return age <= maxAge;
+    return (
+      age >= range.minAge &&
+      age <= range.maxAge
+    );
   }
 
   /*
@@ -964,8 +1222,8 @@ function evaluateRule(
       const match = expectedValue
         .trim()
         .match(
-          /^(\d+)\s*-\s*(\d+)(?:\s+as\s+of\s+(\d{4}-\d{2}-\d{2}))?$/i,
-        );
+  /^(\d+)\s*-\s*(\d+)(?:\s*(?:\||as\s+of)\s*(\d{4}-\d{2}-\d{2}))?$/i,
+);
 
       if (!match) {
         return false;
@@ -1214,9 +1472,10 @@ function evaluateRule(
               return false;
             }
 
-            return (
-              education.passingYear ===
-              requiredPassingYear
+            return compareNumbers(
+              education.passingYear,
+              operator,
+              requiredPassingYear,
             );
           }
 

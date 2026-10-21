@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -73,9 +74,7 @@ const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
   "http://localhost:4000";
 
-function formatDate(
-  value: string | null,
-): string {
+function formatDate(value: string | null): string {
   if (!value) {
     return "Not available";
   }
@@ -86,19 +85,14 @@ function formatDate(
     return "Not available";
   }
 
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    },
-  );
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
-function statusClass(
-  status: string,
-): string {
+function statusClass(status: string): string {
   switch (status) {
     case "OPEN":
       return styles.statusOpen;
@@ -117,15 +111,10 @@ function statusClass(
 function groupExamResults(
   results: ExamResult[],
 ): GroupedExam[] {
-  const groups = new Map<
-    number,
-    GroupedExam
-  >();
+  const groups = new Map<number, GroupedExam>();
 
   for (const result of results) {
-    const existing = groups.get(
-      result.exam.id,
-    );
+    const existing = groups.get(result.exam.id);
 
     if (!existing) {
       groups.set(result.exam.id, {
@@ -134,8 +123,7 @@ function groupExamResults(
         eligible: result.eligible,
         openApplications:
           result.deadlines.filter(
-            (deadline) =>
-              deadline.status === "OPEN",
+            (deadline) => deadline.status === "OPEN",
           ).length,
       });
 
@@ -150,8 +138,7 @@ function groupExamResults(
 
     existing.openApplications +=
       result.deadlines.filter(
-        (deadline) =>
-          deadline.status === "OPEN",
+        (deadline) => deadline.status === "OPEN",
       ).length;
   }
 
@@ -168,10 +155,9 @@ export default function Home() {
     "eligibility-test@example.com",
   );
 
-  const [password, setPassword] =
-    useState(
-      "EligibilityTest123!",
-    );
+  const [password, setPassword] = useState(
+    "EligibilityTest123!",
+  );
 
   const [loginLoading, setLoginLoading] =
     useState(false);
@@ -217,7 +203,26 @@ export default function Home() {
       const data =
         (await response.json()) as ApiResponse;
 
-      setResults(data.results ?? []);
+      /*
+       * Hide the development-only notification
+       * test exam from the student dashboard.
+       *
+       * We use the exam name instead of the ID
+       * so this keeps working even if the database
+       * ID changes later.
+       */
+      const presentationResults =
+        (data.results ?? []).filter(
+          (result) =>
+            !result.exam.name
+              .trim()
+              .toLowerCase()
+              .includes(
+                "examconnect notification test exam",
+              ),
+        );
+
+      setResults(presentationResults);
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -276,8 +281,7 @@ export default function Home() {
         {
           method: "POST",
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
           },
           credentials: "include",
           body: JSON.stringify({
@@ -293,10 +297,7 @@ export default function Home() {
           message?: string;
         };
 
-      if (
-        !response.ok ||
-        !data.user
-      ) {
+      if (!response.ok || !data.user) {
         throw new Error(
           data.message ??
             "Invalid email or password.",
@@ -332,26 +333,15 @@ export default function Home() {
     }
   }
 
-  /*
-   * Login screen
-   */
   if (!user) {
     return (
       <main className={styles.authPage}>
-        <section
-          className={styles.loginCard}
-        >
-          <div
-            className={styles.loginBrand}
-          >
+        <section className={styles.loginCard}>
+          <div className={styles.loginBrand}>
             EXAMCONNECT
           </div>
 
-          <p
-            className={
-              styles.loginEyebrow
-            }
-          >
+          <p className={styles.loginEyebrow}>
             STUDENT PORTAL
           </p>
 
@@ -359,11 +349,7 @@ export default function Home() {
             Find the exams made for you.
           </h1>
 
-          <p
-            className={
-              styles.loginSubtitle
-            }
-          >
+          <p className={styles.loginSubtitle}>
             Sign in to check government
             exams you are eligible for,
             application deadlines, and
@@ -381,9 +367,7 @@ export default function Home() {
                 type="email"
                 value={email}
                 onChange={(event) =>
-                  setEmail(
-                    event.target.value,
-                  )
+                  setEmail(event.target.value)
                 }
                 placeholder="Enter your email"
                 autoComplete="email"
@@ -398,9 +382,7 @@ export default function Home() {
                 type="password"
                 value={password}
                 onChange={(event) =>
-                  setPassword(
-                    event.target.value,
-                  )
+                  setPassword(event.target.value)
                 }
                 placeholder="Enter your password"
                 autoComplete="current-password"
@@ -409,20 +391,14 @@ export default function Home() {
             </label>
 
             {loginError && (
-              <div
-                className={
-                  styles.loginError
-                }
-              >
+              <div className={styles.loginError}>
                 {loginError}
               </div>
             )}
 
             <button
               type="submit"
-              className={
-                styles.loginButton
-              }
+              className={styles.loginButton}
               disabled={loginLoading}
             >
               {loginLoading
@@ -431,11 +407,7 @@ export default function Home() {
             </button>
           </form>
 
-          <p
-            className={
-              styles.demoText
-            }
-          >
+          <p className={styles.demoText}>
             Development test account is
             pre-filled.
           </p>
@@ -444,10 +416,6 @@ export default function Home() {
     );
   }
 
-  /*
-   * Group post-level API results
-   * into unique exams.
-   */
   const groupedExams =
     groupExamResults(results);
 
@@ -461,25 +429,15 @@ export default function Home() {
       (exam) => !exam.eligible,
     );
 
-  /*
-   * Count unique exams that have at least
-   * one open application.
-   */
   const openExams = groupedExams.filter(
     (exam) => exam.openApplications > 0,
   ).length;
 
   return (
     <main className={styles.page}>
-      <header
-        className={styles.header}
-      >
+      <header className={styles.header}>
         <div>
-          <p
-            className={
-              styles.brand
-            }
-          >
+          <p className={styles.brand}>
             EXAMCONNECT
           </p>
 
@@ -487,11 +445,7 @@ export default function Home() {
             Government Exam Dashboard
           </h1>
 
-          <p
-            className={
-              styles.subtitle
-            }
-          >
+          <p className={styles.subtitle}>
             Find government exams you
             are eligible for, track
             deadlines, and apply through
@@ -499,24 +453,14 @@ export default function Home() {
           </p>
         </div>
 
-        <div
-          className={
-            styles.headerActions
-          }
-        >
-          <span
-            className={
-              styles.userEmail
-            }
-          >
+        <div className={styles.headerActions}>
+          <span className={styles.userEmail}>
             {user.email}
           </span>
 
           <button
             type="button"
-            className={
-              styles.profileButton
-            }
+            className={styles.profileButton}
             onClick={() =>
               router.push(
                 "/student/profile",
@@ -528,9 +472,7 @@ export default function Home() {
 
           <button
             type="button"
-            className={
-              styles.logoutButton
-            }
+            className={styles.logoutButton}
             onClick={handleLogout}
           >
             Logout
@@ -538,21 +480,9 @@ export default function Home() {
         </div>
       </header>
 
-      <section
-        className={
-          styles.statsGrid
-        }
-      >
-        <div
-          className={
-            styles.statCard
-          }
-        >
-          <span
-            className={
-              styles.statLabel
-            }
-          >
+      <section className={styles.statsGrid}>
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>
             Total Exams
           </span>
 
@@ -561,16 +491,8 @@ export default function Home() {
           </strong>
         </div>
 
-        <div
-          className={
-            styles.statCard
-          }
-        >
-          <span
-            className={
-              styles.statLabel
-            }
-          >
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>
             Eligible Exams
           </span>
 
@@ -579,16 +501,8 @@ export default function Home() {
           </strong>
         </div>
 
-        <div
-          className={
-            styles.statCard
-          }
-        >
-          <span
-            className={
-              styles.statLabel
-            }
-          >
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>
             Open Exams
           </span>
 
@@ -597,16 +511,8 @@ export default function Home() {
           </strong>
         </div>
 
-        <div
-          className={
-            styles.statCard
-          }
-        >
-          <span
-            className={
-              styles.statLabel
-            }
-          >
+        <div className={styles.statCard}>
+          <span className={styles.statLabel}>
             Not Eligible
           </span>
 
@@ -617,16 +523,8 @@ export default function Home() {
       </section>
 
       {loading && (
-        <section
-          className={
-            styles.messageCard
-          }
-        >
-          <div
-            className={
-              styles.spinner
-            }
-          />
+        <section className={styles.messageCard}>
+          <div className={styles.spinner} />
 
           <p>
             Checking your
@@ -635,160 +533,220 @@ export default function Home() {
         </section>
       )}
 
-      {error &&
-        !loading && (
-          <section
-            className={
-              styles.errorCard
-            }
+      {error && !loading && (
+        <section className={styles.errorCard}>
+          <h2>
+            Unable to load dashboard
+          </h2>
+
+          <p>{error}</p>
+
+          <button
+            type="button"
+            className={styles.retryButton}
+            onClick={loadEligibleExams}
           >
-            <h2>
-              Unable to load dashboard
-            </h2>
+            Try Again
+          </button>
+        </section>
+      )}
 
-            <p>{error}</p>
+      {!loading && !error && (
+        <>
+          <section
+            className={styles.sectionHeader}
+          >
+            <div>
+              <p
+                className={
+                  styles.sectionEyebrow
+                }
+              >
+                Your Results
+              </p>
 
-            <button
-              type="button"
+              <h2>
+                Eligible Government
+                Exams
+              </h2>
+            </div>
+
+            <span
               className={
-                styles.retryButton
-              }
-              onClick={
-                loadEligibleExams
+                styles.resultCount
               }
             >
-              Try Again
-            </button>
+              {eligibleExams.length}{" "}
+              result
+              {eligibleExams.length !== 1
+                ? "s"
+                : ""}
+            </span>
           </section>
-        )}
 
-      {!loading &&
-        !error && (
-          <>
+          {eligibleExams.length === 0 && (
             <section
-              className={
-                styles.sectionHeader
-              }
+              className={styles.emptyCard}
             >
-              <div>
-                <p
-                  className={
-                    styles.sectionEyebrow
-                  }
-                >
-                  Your Results
-                </p>
-
-                <h2>
-                  Eligible Government
-                  Exams
-                </h2>
+              <div
+                className={styles.emptyIcon}
+              >
+                !
               </div>
 
-              <span
-                className={
-                  styles.resultCount
-                }
-              >
-                {eligibleExams.length}{" "}
-                result
-                {eligibleExams.length !==
-                1
-                  ? "s"
-                  : ""}
-              </span>
+              <h3>
+                No eligible exams found
+              </h3>
+
+              <p>
+                Update your student
+                profile and education
+                details to check again.
+              </p>
             </section>
+          )}
 
-            {eligibleExams.length ===
-              0 && (
-              <section
-                className={
-                  styles.emptyCard
-                }
-              >
-                <div
-                  className={
-                    styles.emptyIcon
-                  }
+          <section
+            className={styles.examGrid}
+          >
+            {eligibleExams.map(
+              (group) => (
+                <article
+                  key={group.exam.id}
+                  className={styles.examCard}
                 >
-                  !
-                </div>
+                  <div
+                    className={styles.cardTop}
+                  >
+                    <span
+                      className={
+                        styles.eligibleBadge
+                      }
+                    >
+                      ✓ Eligible
+                    </span>
 
-                <h3>
-                  No eligible exams
-                  found
-                </h3>
+                    <span
+                      className={
+                        styles.examType
+                      }
+                    >
+                      {group.exam.examType}
+                    </span>
+                  </div>
 
-                <p>
-                  Update your student
-                  profile and education
-                  details to check
-                  again.
-                </p>
-              </section>
-            )}
+                  <h3>
+                    {group.exam.name}
+                  </h3>
 
-            <section
-              className={
-                styles.examGrid
-              }
-            >
-              {eligibleExams.map(
-                (group) => (
-                  <article
-                    key={
-                      group.exam.id
-                    }
+                  <p
                     className={
-                      styles.examCard
+                      styles.organization
                     }
                   >
-                    <div
+                    {group.exam.conductingBody}
+                  </p>
+
+                  <div
+                    className={
+                      styles.postBox
+                    }
+                  >
+                    <span
                       className={
-                        styles.cardTop
+                        styles.fieldLabel
                       }
                     >
-                      <span
-                        className={
-                          styles.eligibleBadge
-                        }
-                      >
-                        ✓ Eligible
-                      </span>
+                      Eligible Posts
+                    </span>
 
-                      <span
-                        className={
-                          styles.examType
-                        }
-                      >
-                        {
-                          group.exam
-                            .examType
-                        }
-                      </span>
-                    </div>
+                    {group.posts
+                      .filter(
+                        (result) =>
+                          result.eligible,
+                      )
+                      .map((result) => (
+                        <div
+                          key={
+                            result.post?.id ??
+                            result.exam.id
+                          }
+                          className={
+                            styles.postRow
+                          }
+                        >
+                          <span>
+                            ✓
+                          </span>
 
-                    <h3>
-                      {
-                        group.exam
-                          .name
-                      }
-                    </h3>
+                          <strong>
+                            {result.post
+                              ?.name ??
+                              "Exam Level Eligibility"}
+                          </strong>
+                        </div>
+                      ))}
+                  </div>
 
-                    <p
+                  <div
+                    className={styles.reasons}
+                  >
+                    <span
                       className={
-                        styles.organization
+                        styles.fieldLabel
                       }
                     >
-                      {
-                        group.exam
-                          .conductingBody
-                      }
-                    </p>
+                      Eligibility
+                    </span>
 
+                    {group.posts
+                      .filter(
+                        (result) =>
+                          result.eligible,
+                      )
+                      .flatMap(
+                        (result) =>
+                          result.reasons,
+                      )
+                      .filter(
+                        (
+                          reason,
+                          index,
+                          all,
+                        ) =>
+                          all.indexOf(
+                            reason,
+                          ) === index,
+                      )
+                      .map(
+                        (
+                          reason,
+                          index,
+                        ) => (
+                          <p
+                            key={`${reason}-${index}`}
+                            className={
+                              styles.reasonPassed
+                            }
+                          >
+                            ✓{" "}
+                            {reason.replace(
+                              /^Requirement satisfied:\s*/,
+                              "",
+                            )}
+                          </p>
+                        ),
+                      )}
+                  </div>
+
+                  {group.posts.some(
+                    (result) =>
+                      result.deadlines.length >
+                      0,
+                  ) && (
                     <div
                       className={
-                        styles.postBox
+                        styles.deadlineBox
                       }
                     >
                       <span
@@ -796,49 +754,107 @@ export default function Home() {
                           styles.fieldLabel
                         }
                       >
-                        Eligible Posts
+                        Application
                       </span>
 
                       {group.posts
                         .filter(
                           (result) =>
-                            result.eligible,
+                            result.eligible &&
+                            result.deadlines
+                              .length > 0,
+                        )
+                        .flatMap(
+                          (result) =>
+                            result.deadlines.map(
+                              (
+                                deadline,
+                              ) => ({
+                                ...deadline,
+                                postName:
+                                  result.post
+                                    ?.name ??
+                                  "Exam Level",
+                              }),
+                            ),
                         )
                         .map(
-                          (result) => (
+                          (
+                            deadline,
+                          ) => (
                             <div
-                              key={
-                                result
-                                  .post
-                                  ?.id ??
-                                result
-                                  .exam
-                                  .id
-                              }
+                              key={`${deadline.id}-${deadline.postName}`}
                               className={
-                                styles.postRow
+                                styles.deadlineItem
                               }
                             >
-                              <span>
-                                ✓
-                              </span>
+                              <div>
+                                <span
+                                  className={`${styles.statusBadge} ${statusClass(
+                                    deadline.status,
+                                  )}`}
+                                >
+                                  {
+                                    deadline.status
+                                  }
+                                </span>
 
-                              <strong>
-                                {
-                                  result
-                                    .post
-                                    ?.name ??
-                                  "Exam Level Eligibility"
-                                }
-                              </strong>
+                                <p
+                                  className={
+                                    styles.deadlinePost
+                                  }
+                                >
+                                  {
+                                    deadline.postName
+                                  }
+                                </p>
+
+                                <p>
+                                  Last Date:{" "}
+                                  <strong>
+                                    {formatDate(
+                                      deadline.applicationEnd,
+                                    )}
+                                  </strong>
+                                </p>
+
+                                {deadline.examDate && (
+                                  <p>
+                                    Exam Date:{" "}
+                                    <strong>
+                                      {formatDate(
+                                        deadline.examDate,
+                                      )}
+                                    </strong>
+                                  </p>
+                                )}
+                              </div>
+
+                              {deadline.applicationUrl && (
+                                <a
+                                  href={
+                                    deadline.applicationUrl
+                                  }
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={
+                                    styles.applyButton
+                                  }
+                                >
+                                  Apply Officially →
+                                </a>
+                              )}
                             </div>
                           ),
                         )}
                     </div>
+                  )}
 
+                  {group.posts[0]?.sources
+                    .length > 0 && (
                     <div
                       className={
-                        styles.reasons
+                        styles.sourceBox
                       }
                     >
                       <span
@@ -846,236 +862,57 @@ export default function Home() {
                           styles.fieldLabel
                         }
                       >
-                        Eligibility
+                        Official Source
                       </span>
 
-                      {group.posts
-                        .filter(
-                          (result) =>
-                            result.eligible,
-                        )
-                        .flatMap(
-                          (result) =>
-                            result.reasons,
-                        )
-                        .filter(
-                          (
-                            reason,
-                            index,
-                            all,
-                          ) =>
-                            all.indexOf(
-                              reason,
-                            ) ===
-                            index,
-                        )
-                        .map(
-                          (
-                            reason,
-                            index,
-                          ) => (
-                            <p
-                              key={`${reason}-${index}`}
-                              className={
-                                styles.reasonPassed
-                              }
-                            >
-                              ✓{" "}
-                              {reason.replace(
-                                /^Requirement satisfied:\s*/,
-                                "",
-                              )}
-                            </p>
-                          ),
-                        )}
+                      <p>
+                        {
+                          group.posts[0]
+                            .sources[0]
+                            .organization
+                        }
+                      </p>
+
+                      <a
+                        href={
+                          group.posts[0]
+                            .sources[0]
+                            .officialUrl
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View official
+                        notification
+                      </a>
                     </div>
+                  )}
 
-                    {group.posts.some(
-                      (result) =>
-                        result.deadlines
-                          .length >
-                        0,
-                    ) && (
-                      <div
-                        className={
-                          styles.deadlineBox
-                        }
-                      >
-                        <span
-                          className={
-                            styles.fieldLabel
-                          }
-                        >
-                          Application
-                        </span>
-
-                        {group.posts
-                          .filter(
-                            (result) =>
-                              result.eligible &&
-                              result
-                                .deadlines
-                                .length >
-                              0,
-                          )
-                          .flatMap(
-                            (result) =>
-                              result.deadlines.map(
-                                (
-                                  deadline,
-                                ) => ({
-                                  ...deadline,
-                                  postName:
-                                    result
-                                      .post
-                                      ?.name ??
-                                    "Exam Level",
-                                }),
-                              ),
-                          )
-                          .map(
-                            (
-                              deadline,
-                            ) => (
-                              <div
-                                key={`${deadline.id}-${deadline.postName}`}
-                                className={
-                                  styles.deadlineItem
-                                }
-                              >
-                                <div>
-                                  <span
-                                    className={`${styles.statusBadge} ${statusClass(
-                                      deadline.status,
-                                    )}`}
-                                  >
-                                    {
-                                      deadline.status
-                                    }
-                                  </span>
-
-                                  <p
-                                    className={
-                                      styles.deadlinePost
-                                    }
-                                  >
-                                    {
-                                      deadline.postName
-                                    }
-                                  </p>
-
-                                  <p>
-                                    Last
-                                    Date:{" "}
-                                    <strong>
-                                      {formatDate(
-                                        deadline.applicationEnd,
-                                      )}
-                                    </strong>
-                                  </p>
-
-                                  {deadline.examDate && (
-                                    <p>
-                                      Exam
-                                      Date:{" "}
-                                      <strong>
-                                        {formatDate(
-                                          deadline.examDate,
-                                        )}
-                                      </strong>
-                                    </p>
-                                  )}
-                                </div>
-
-                                {deadline.applicationUrl && (
-                                  <a
-                                    href={
-                                      deadline.applicationUrl
-                                    }
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={
-                                      styles.applyButton
-                                    }
-                                  >
-                                    Apply
-                                    Officially
-                                    →
-                                  </a>
-                                )}
-                              </div>
-                            ),
-                          )}
-                      </div>
-                    )}
-
-                    {group.posts[0]
-                      ?.sources
-                      .length >
-                      0 && (
-                      <div
-                        className={
-                          styles.sourceBox
-                        }
-                      >
-                        <span
-                          className={
-                            styles.fieldLabel
-                          }
-                        >
-                          Official Source
-                        </span>
-
-                        <p>
-                          {
-                            group
-                              .posts[0]
-                              .sources[0]
-                              .organization
-                          }
-                        </p>
-
-                        <a
-                          href={
-                            group
-                              .posts[0]
-                              .sources[0]
-                              .officialUrl
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          View official
-                          notification
-                        </a>
-                      </div>
-                    )}
-
-                    <div
+                  <div
+                    className={
+                      styles.detailsAction
+                    }
+                  >
+                    <button
+                      type="button"
                       className={
-                        styles.detailsAction
+                        styles.detailsButton
+                      }
+                      onClick={() =>
+                        router.push(
+                          `/student/exam/${group.exam.id}`,
+                        )
                       }
                     >
-                      <button
-                        type="button"
-                        className={
-                          styles.detailsButton
-                        }
-                        onClick={() =>
-                          router.push(
-                            `/student/exam/${group.exam.id}`,
-                          )
-                        }
-                      >
-                        View Details →
-                      </button>
-                    </div>
-                  </article>
-                ),
-              )}
-            </section>
-          </>
-        )}
+                      View Details →
+                    </button>
+                  </div>
+                </article>
+              ),
+            )}
+          </section>
+        </>
+      )}
     </main>
   );
 }
