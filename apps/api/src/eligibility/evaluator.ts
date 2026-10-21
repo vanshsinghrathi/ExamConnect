@@ -1065,7 +1065,7 @@ function buildSatisfiedReason(
         requiredPassingYear !==
         undefined
       ) {
-        return `Your passing year: ${actual} • Category: ${category} • Required passing year: ${requiredPassingYear}`;
+        return `Your passing year: ${actual} • Category: ${category} • Required: ${operator} ${requiredPassingYear}`;
       }
 
       return `Your passing year: ${actual} • Category: ${category} • No passing year rule found for this category`;
