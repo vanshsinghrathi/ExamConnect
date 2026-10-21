@@ -24,6 +24,9 @@ const createExamSchema = z.object({
 const createPostSchema = z.object({
   name: z.string().trim().min(1).max(200),
   code: z.string().trim().max(100).optional(),
+  department: z.string().trim().min(1).max(200).optional(),
+  vacancies: z.number().int().positive().optional(),
+  qualification: z.string().trim().min(1).max(5000).optional(),
   description: z.string().trim().max(5000).optional(),
 });
 
@@ -55,6 +58,7 @@ const attachSourceSchema = z.object({
 });
 
 export async function adminExamRoute(app: FastifyInstance) {
+  // Create a new exam
   app.post(
     "/admin/exams",
     {
@@ -99,6 +103,7 @@ export async function adminExamRoute(app: FastifyInstance) {
     },
   );
 
+  // Create a post under an exam
   app.post(
     "/admin/exams/:examId/posts",
     {
@@ -145,6 +150,9 @@ export async function adminExamRoute(app: FastifyInstance) {
         examId,
         name: parsed.data.name,
         code: parsed.data.code,
+        department: parsed.data.department,
+        vacancies: parsed.data.vacancies,
+        qualification: parsed.data.qualification,
         description: parsed.data.description,
         updatedAt: Temporal.Now.instant(),
       });
@@ -155,6 +163,7 @@ export async function adminExamRoute(app: FastifyInstance) {
     },
   );
 
+  // Create an eligibility rule for an exam or specific post
   app.post(
     "/admin/exams/:examId/eligibility-rules",
     {
@@ -267,6 +276,7 @@ export async function adminExamRoute(app: FastifyInstance) {
     },
   );
 
+  // Create an application deadline
   app.post(
     "/admin/exams/:examId/deadlines",
     {
@@ -349,6 +359,7 @@ export async function adminExamRoute(app: FastifyInstance) {
     },
   );
 
+  // Attach an official notification source to an eligibility-rule version
   app.patch(
     "/admin/eligibility-rule-versions/:versionId/source",
     {
@@ -406,8 +417,7 @@ export async function adminExamRoute(app: FastifyInstance) {
       if (!source) {
         return reply.code(404).send({
           error: "NOTIFICATION_SOURCE_NOT_FOUND",
-          message:
-            "Notification source not found.",
+          message: "Notification source not found.",
         });
       }
 

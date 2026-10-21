@@ -38,9 +38,7 @@ function calculateApplicationStatus(
   const now = new Date();
 
   if (applicationStart) {
-    const start = new Date(
-      applicationStart,
-    );
+    const start = new Date(applicationStart);
 
     if (now < start) {
       return "UPCOMING";
@@ -48,9 +46,7 @@ function calculateApplicationStatus(
   }
 
   if (applicationEnd) {
-    const end = new Date(
-      applicationEnd,
-    );
+    const end = new Date(applicationEnd);
 
     if (now > end) {
       return "CLOSED";
@@ -70,10 +66,6 @@ function calculateApplicationStatus(
  * When an AGE rule contains category-specific
  * limits in EligibilityRule.description, use
  * that value instead of the old version value.
- *
- * Example:
- *
- * General:32,OBC:35,SC:37,ST:37,EWS:32
  */
 function getRuleExpectedValue(
   rule: {
@@ -93,6 +85,62 @@ function getRuleExpectedValue(
   return versionExpectedValue;
 }
 
+/*
+ * Return true for a development-only test source.
+ *
+ * These should not be displayed as official notices
+ * for real government exams.
+ */
+function isDevelopmentTestSource(
+  source: Pick<
+    EligibilitySource,
+    "notificationTitle"
+  >,
+): boolean {
+  return /development\s+test|test\s+notification/i.test(
+    source.notificationTitle,
+  );
+}
+
+/*
+ * Convert a database notification source into
+ * the shape returned by the eligibility API.
+ */
+function formatNotificationSource(
+  source: {
+    id: number;
+    organization: string;
+    notificationTitle: string;
+    notificationDate: {
+      toString(): string;
+    } | null;
+    officialUrl: string;
+    notificationIdentifier: string | null;
+    dateImported: {
+      toString(): string;
+    };
+    lastVerifiedAt: {
+      toString(): string;
+    } | null;
+  },
+): EligibilitySource {
+  return {
+    id: source.id,
+    organization: source.organization,
+    notificationTitle: source.notificationTitle,
+    notificationDate: source.notificationDate
+      ? source.notificationDate.toString()
+      : null,
+    officialUrl: source.officialUrl,
+    notificationIdentifier:
+      source.notificationIdentifier,
+    dateImported: source.dateImported.toString(),
+    lastVerifiedAt: source.lastVerifiedAt
+      ? source.lastVerifiedAt.toString()
+      : null,
+  };
+}
+
 export async function eligibilityRoute(
   app: FastifyInstance,
 ) {
@@ -102,8 +150,7 @@ export async function eligibilityRoute(
       preHandler: requireAuth,
     },
     async (request, reply) => {
-      const userId =
-        request.authUser!.id;
+      const userId = request.authUser!.id;
 
       /*
        * Load student's profile.
@@ -118,8 +165,7 @@ export async function eligibilityRoute(
       if (!profile) {
         return reply.code(404).send({
           error: "PROFILE_NOT_FOUND",
-          message:
-            "Student profile not found.",
+          message: "Student profile not found.",
         });
       }
 
@@ -129,38 +175,28 @@ export async function eligibilityRoute(
       const educationRecords =
         await db.orm.public.EducationRecord
           .where({
-            studentProfileId:
-              profile.id,
+            studentProfileId: profile.id,
           })
           .all();
 
-      const student: EligibilityStudent =
-        {
-          profile: {
-            category:
-              profile.category,
-            state:
-              profile.state,
-            dateOfBirth:
-              profile.dateOfBirth
-                ? profile.dateOfBirth.toString()
-                : null,
-          },
+      const student: EligibilityStudent = {
+        profile: {
+          category: profile.category,
+          state: profile.state,
+          dateOfBirth: profile.dateOfBirth
+            ? profile.dateOfBirth.toString()
+            : null,
+        },
 
-          education:
-            educationRecords.map(
-              (education) => ({
-                qualification:
-                  education.qualification,
-                percentage:
-                  education.percentage,
-                passingYear:
-                  education.passingYear,
-                stream:
-                  education.stream,
-              }),
-            ),
-        };
+        education: educationRecords.map(
+          (education) => ({
+            qualification: education.qualification,
+            percentage: education.percentage,
+            passingYear: education.passingYear,
+            stream: education.stream,
+          }),
+        ),
+      };
 
       /*
        * Load all exams.
@@ -171,6 +207,14 @@ export async function eligibilityRoute(
       const results = [];
 
       for (const exam of exams) {
+        const normalizedExamName =
+          exam.name.trim().toLowerCase();
+
+        const normalizedExamOrganization =
+          exam.conductingBody
+            .trim()
+            .toLowerCase();
+
         /*
          * Load all posts for this exam.
          */
@@ -192,22 +236,18 @@ export async function eligibilityRoute(
             })
             .all();
 
-        const activeExamRules: EligibilityRule[] =
-          [];
-
-        const examSources: EligibilitySource[] =
-          [];
+        const activeExamRules: EligibilityRule[] = [];
+        const examSources: EligibilitySource[] = [];
 
         /*
-         * Build exam-level rules and
-         * official notification sources.
+         * Build exam-level rules and sources
+         * explicitly linked to those rule versions.
          */
         for (const rule of examRules) {
           const version =
             await db.orm.public.EligibilityRuleVersion
               .where({
-                eligibilityRuleId:
-                  rule.id,
+                eligibilityRuleId: rule.id,
                 status: "ACTIVE",
               })
               .first();
@@ -228,10 +268,8 @@ export async function eligibilityRoute(
             expectedValue:
               getRuleExpectedValue(
                 {
-                  ruleType:
-                    rule.ruleType,
-                  description:
-                    rule.description,
+                  ruleType: rule.ruleType,
+                  description: rule.description,
                 },
                 version.expectedValue,
               ),
@@ -243,9 +281,7 @@ export async function eligibilityRoute(
               version.logicOperator,
           });
 
-          if (
-            version.notificationSourceId
-          ) {
+          if (version.notificationSourceId) {
             const source =
               await db.orm.public.NotificationSource
                 .where({
@@ -254,50 +290,85 @@ export async function eligibilityRoute(
                 .first();
 
             if (source) {
-              examSources.push({
-                id: source.id,
-
-                organization:
-                  source.organization,
-
-                notificationTitle:
-                  source.notificationTitle,
-
-                notificationDate:
-                  source.notificationDate
-                    ? source.notificationDate.toString()
-                    : null,
-
-                officialUrl:
-                  source.officialUrl,
-
-                notificationIdentifier:
-                  source.notificationIdentifier,
-
-                dateImported:
-                  source.dateImported.toString(),
-
-                lastVerifiedAt:
-                  source.lastVerifiedAt
-                    ? source.lastVerifiedAt.toString()
-                    : null,
-              });
+              examSources.push(
+                formatNotificationSource(source),
+              );
             }
           }
         }
 
         /*
-         * Remove duplicate exam-level sources.
+         * Find notification sources that match this
+         * exam's conducting body and notification title.
+         *
+         * Example:
+         * Exam:
+         * Combined Higher Secondary (10+2) Level
+         * Examination, 2026
+         *
+         * Notification:
+         * Notice of Combined Higher Secondary (10+2)
+         * Level Examination, 2026
+         *
+         * This lets the API return the SSC PDF even
+         * when no rule version has sourceId attached.
+         */
+        const organizationSources =
+          await db.orm.public.NotificationSource
+            .where({
+              organization: exam.conductingBody,
+            })
+            .all();
+
+        const matchingExamSources: EligibilitySource[] =
+          organizationSources
+            .filter((source) => {
+              const title =
+                source.notificationTitle
+                  .trim()
+                  .toLowerCase();
+
+              return (
+                title.includes(normalizedExamName) &&
+                !isDevelopmentTestSource(source)
+              );
+            })
+            .map((source) =>
+              formatNotificationSource(source),
+            );
+
+        /*
+         * Keep explicitly linked sources only if
+         * they belong to this exam's organization and
+         * are not generic development test sources.
+         */
+        const relevantLinkedExamSources =
+          examSources.filter((source) => {
+            const normalizedSourceOrganization =
+              source.organization
+                .trim()
+                .toLowerCase();
+
+            return (
+              normalizedSourceOrganization ===
+                normalizedExamOrganization &&
+              !isDevelopmentTestSource(source)
+            );
+          });
+
+        /*
+         * Merge and deduplicate exam-level sources.
          */
         const uniqueExamSources =
           Array.from(
             new Map(
-              examSources.map(
-                (source) => [
-                  source.id,
-                  source,
-                ],
-              ),
+              [
+                ...relevantLinkedExamSources,
+                ...matchingExamSources,
+              ].map((source) => [
+                source.id,
+                source,
+              ]),
             ).values(),
           );
 
@@ -321,94 +392,61 @@ export async function eligibilityRoute(
               .all();
 
           const formattedDeadlines: EligibilityDeadline[] =
-            deadlines.map(
-              (deadline) => {
-                const applicationStart =
-                  deadline.applicationStart
-                    ? deadline.applicationStart.toString()
-                    : null;
+            deadlines.map((deadline) => {
+              const applicationStart =
+                deadline.applicationStart
+                  ? deadline.applicationStart.toString()
+                  : null;
 
-                const applicationEnd =
-                  deadline.applicationEnd
-                    ? deadline.applicationEnd.toString()
-                    : null;
+              const applicationEnd =
+                deadline.applicationEnd
+                  ? deadline.applicationEnd.toString()
+                  : null;
 
-                return {
-                  id: deadline.id,
+              return {
+                id: deadline.id,
+                applicationUrl: deadline.applicationUrl,
 
-                  applicationUrl:
-                    deadline.applicationUrl,
-
-                  status:
-                    calculateApplicationStatus(
-                      applicationStart,
-                      applicationEnd,
-                    ),
-
+                status: calculateApplicationStatus(
                   applicationStart,
-
                   applicationEnd,
+                ),
 
-                  examDate:
-                    deadline.examDate
-                      ? deadline.examDate.toString()
-                      : null,
-                };
-              },
-            );
+                applicationStart,
+                applicationEnd,
+
+                examDate: deadline.examDate
+                  ? deadline.examDate.toString()
+                  : null,
+              };
+            });
 
           results.push({
             exam: {
               id: exam.id,
-
               name: exam.name,
-
-              conductingBody:
-                exam.conductingBody,
-
-              examType:
-                exam.examType,
-
-              description:
-                exam.description,
-
-              officialWebsite:
-                exam.officialWebsite,
+              conductingBody: exam.conductingBody,
+              examType: exam.examType,
+              description: exam.description,
+              officialWebsite: exam.officialWebsite,
             },
 
             post: null,
 
-            eligible:
-              evaluation.eligible,
-
-            reasons:
-              evaluation.reasons,
-
-            sources:
-              uniqueExamSources,
-
-            deadlines:
-              formattedDeadlines,
+            eligible: evaluation.eligible,
+            reasons: evaluation.reasons,
+            sources: uniqueExamSources,
+            deadlines: formattedDeadlines,
           });
 
           if (evaluation.eligible) {
-            await createNewEligibleExamNotification(
-              {
-                userId,
-
-                examId:
-                  exam.id,
-
-                postId:
-                  null,
-
-                examName:
-                  exam.name,
-
-                postName:
-                  null,
-              },
-            );
+            await createNewEligibleExamNotification({
+              userId,
+              examId: exam.id,
+              postId: null,
+              examName: exam.name,
+              postName: null,
+            });
           }
 
           continue;
@@ -431,24 +469,19 @@ export async function eligibilityRoute(
               })
               .all();
 
-          const activePostRules: EligibilityRule[] =
-            [];
-
-          const postSources: EligibilitySource[] =
-            [];
+          const activePostRules: EligibilityRule[] = [];
+          const postSources: EligibilitySource[] = [];
 
           /*
-           * Build post-specific rules.
+           * Build post-specific rules and their
+           * explicitly linked notification sources.
            */
           for (const rule of postRules) {
             const version =
               await db.orm.public.EligibilityRuleVersion
                 .where({
-                  eligibilityRuleId:
-                    rule.id,
-
-                  status:
-                    "ACTIVE",
+                  eligibilityRuleId: rule.id,
+                  status: "ACTIVE",
                 })
                 .first();
 
@@ -468,13 +501,9 @@ export async function eligibilityRoute(
               expectedValue:
                 getRuleExpectedValue(
                   {
-                    ruleType:
-                      rule.ruleType,
-
-                    description:
-                      rule.description,
+                    ruleType: rule.ruleType,
+                    description: rule.description,
                   },
-
                   version.expectedValue,
                 ),
 
@@ -485,9 +514,7 @@ export async function eligibilityRoute(
                 version.logicOperator,
             });
 
-            if (
-              version.notificationSourceId
-            ) {
+            if (version.notificationSourceId) {
               const source =
                 await db.orm.public.NotificationSource
                   .where({
@@ -496,52 +523,25 @@ export async function eligibilityRoute(
                   .first();
 
               if (source) {
-                postSources.push({
-                  id: source.id,
-
-                  organization:
-                    source.organization,
-
-                  notificationTitle:
-                    source.notificationTitle,
-
-                  notificationDate:
-                    source.notificationDate
-                      ? source.notificationDate.toString()
-                      : null,
-
-                  officialUrl:
-                    source.officialUrl,
-
-                  notificationIdentifier:
-                    source.notificationIdentifier,
-
-                  dateImported:
-                    source.dateImported.toString(),
-
-                  lastVerifiedAt:
-                    source.lastVerifiedAt
-                      ? source.lastVerifiedAt.toString()
-                      : null,
-                });
+                postSources.push(
+                  formatNotificationSource(source),
+                );
               }
             }
           }
 
           /*
-           * Add official qualification stored
+           * Add the qualification requirement stored
            * directly on the Post.
            */
           if (post.qualification) {
             activePostRules.push({
-              name:
-                "Qualification Requirement",
+              name: "Qualification Requirement",
 
               conditionField:
                 "qualificationRequirement",
 
-              operator:
-                "REQUIRED",
+              operator: "REQUIRED",
 
               expectedValue:
                 post.qualification,
@@ -549,15 +549,8 @@ export async function eligibilityRoute(
               qualificationRequirement:
                 post.qualification,
 
-              /*
-               * Post qualification is an
-               * individual AND requirement.
-               */
-              logicGroup:
-                null,
-
-              logicOperator:
-                "AND",
+              logicGroup: null,
+              logicOperator: "AND",
             });
           }
 
@@ -591,8 +584,8 @@ export async function eligibilityRoute(
 
           /*
            * Backward compatibility:
-           * use exam-level deadline when
-           * post-specific deadline doesn't exist.
+           * use the exam-level deadline if no
+           * post-specific deadline exists.
            */
           if (deadlines.length === 0) {
             deadlines =
@@ -608,140 +601,113 @@ export async function eligibilityRoute(
            * Format deadlines.
            */
           const formattedDeadlines: EligibilityDeadline[] =
-            deadlines.map(
-              (deadline) => {
-                const applicationStart =
-                  deadline.applicationStart
-                    ? deadline.applicationStart.toString()
-                    : null;
+            deadlines.map((deadline) => {
+              const applicationStart =
+                deadline.applicationStart
+                  ? deadline.applicationStart.toString()
+                  : null;
 
-                const applicationEnd =
-                  deadline.applicationEnd
-                    ? deadline.applicationEnd.toString()
-                    : null;
+              const applicationEnd =
+                deadline.applicationEnd
+                  ? deadline.applicationEnd.toString()
+                  : null;
 
-                return {
-                  id: deadline.id,
+              return {
+                id: deadline.id,
+                applicationUrl: deadline.applicationUrl,
 
-                  applicationUrl:
-                    deadline.applicationUrl,
-
-                  status:
-                    calculateApplicationStatus(
-                      applicationStart,
-                      applicationEnd,
-                    ),
-
+                status: calculateApplicationStatus(
                   applicationStart,
-
                   applicationEnd,
+                ),
 
-                  examDate:
-                    deadline.examDate
-                      ? deadline.examDate.toString()
-                      : null,
-                };
-              },
-            );
+                applicationStart,
+                applicationEnd,
+
+                examDate: deadline.examDate
+                  ? deadline.examDate.toString()
+                  : null,
+              };
+            });
 
           /*
-           * Combine exam-level and
-           * post-level official sources.
+           * Keep only relevant post-level sources.
+           * This avoids displaying development test
+           * notices as if they were official notices.
+           */
+          const relevantPostSources =
+            postSources.filter((source) => {
+              const normalizedSourceOrganization =
+                source.organization
+                  .trim()
+                  .toLowerCase();
+
+              return (
+                normalizedSourceOrganization ===
+                  normalizedExamOrganization &&
+                !isDevelopmentTestSource(source)
+              );
+            });
+
+          /*
+           * Combine exam-level and post-level sources.
            */
           const combinedSources = [
             ...uniqueExamSources,
-            ...postSources,
+            ...relevantPostSources,
           ];
 
           const uniqueSources =
             Array.from(
               new Map(
-                combinedSources.map(
-                  (source) => [
-                    source.id,
-                    source,
-                  ],
-                ),
+                combinedSources.map((source) => [
+                  source.id,
+                  source,
+                ]),
               ).values(),
             );
 
           /*
-           * Return post information.
+           * Return post information and eligibility.
            */
           results.push({
             exam: {
               id: exam.id,
-
               name: exam.name,
-
-              conductingBody:
-                exam.conductingBody,
-
-              examType:
-                exam.examType,
-
-              description:
-                exam.description,
-
-              officialWebsite:
-                exam.officialWebsite,
+              conductingBody: exam.conductingBody,
+              examType: exam.examType,
+              description: exam.description,
+              officialWebsite: exam.officialWebsite,
             },
 
             post: {
               id: post.id,
-
               name: post.name,
-
               code: post.code,
-
-              department:
-                post.department,
-
-              vacancies:
-                post.vacancies,
-
-              qualification:
-                post.qualification,
-
-              description:
-                post.description,
+              department: post.department,
+              vacancies: post.vacancies,
+              qualification: post.qualification,
+              description: post.description,
             },
 
-            eligible:
-              evaluation.eligible,
-
-            reasons:
-              evaluation.reasons,
-
-            sources:
-              uniqueSources,
-
-            deadlines:
-              formattedDeadlines,
+            eligible: evaluation.eligible,
+            reasons: evaluation.reasons,
+            sources: uniqueSources,
+            deadlines: formattedDeadlines,
           });
 
           /*
-           * Create notification when
-           * student qualifies.
+           * Create notification when the student
+           * qualifies for this exam post.
            */
           if (evaluation.eligible) {
-            await createNewEligibleExamNotification(
-              {
-                userId,
-
-                examId:
-                  exam.id,
-
-                postId:
-                  post.id,
-
-                examName:
-                  exam.name,
-
-                postName:
-                  post.name,
-              },
-            );
+            await createNewEligibleExamNotification({
+              userId,
+              examId: exam.id,
+              postId: post.id,
+              examName: exam.name,
+              postName: post.name,
+            });
           }
         }
       }

@@ -120,6 +120,10 @@ function cleanReason(
       /^Requirement not satisfied:\s*/i,
       "",
     )
+    .replace(
+      /^Requirement (?:not )?satisfied:\s*/i,
+      "",
+    )
     .trim();
 }
 
@@ -248,6 +252,10 @@ export default function ExamDetailsPage() {
         }
       }
 
+      /*
+       * Keep one deadline for the same
+       * deadline ID + post combination.
+       */
       return Array.from(
         new Map(
           deadlines.map(
@@ -650,7 +658,7 @@ export default function ExamDetailsPage() {
                           index,
                         ) => (
                           <p
-                            key={`${reason}-${index}`}
+                            key={`${result.post?.id ?? "exam"}-eligible-reason-${index}`}
                             className={
                               styles.reason
                             }
@@ -814,7 +822,7 @@ export default function ExamDetailsPage() {
                               index,
                             ) => (
                               <p
-                                key={`${reason}-${index}`}
+                                key={`${result.post?.id ?? "exam"}-ineligible-reason-${index}`}
                                 className={
                                   styles.reason
                                 }
@@ -880,9 +888,12 @@ export default function ExamDetailsPage() {
             }
           >
             {allDeadlines.map(
-              (deadline) => (
+              (
+                deadline,
+                deadlineIndex,
+              ) => (
                 <article
-                  key={`${deadline.id}-${deadline.postName}`}
+                  key={`${deadline.id}-${deadline.postName}-${deadlineIndex}`}
                   className={
                     styles.deadlineCard
                   }

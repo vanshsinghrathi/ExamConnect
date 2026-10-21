@@ -19,7 +19,9 @@ export async function examRoute(app: FastifyInstance) {
    * Returns one exam.
    */
   app.get("/exams/:id", async (request, reply) => {
-    const id = Number((request.params as { id: string }).id);
+    const id = Number(
+      (request.params as { id: string }).id,
+    );
 
     if (!Number.isInteger(id) || id <= 0) {
       return reply.code(400).send({
@@ -46,10 +48,12 @@ export async function examRoute(app: FastifyInstance) {
 
   /*
    * GET /exams/:id/posts
-   * Returns posts belonging to an exam.
+   * Returns exam posts, including qualification and vacancies.
    */
   app.get("/exams/:id/posts", async (request, reply) => {
-    const examId = Number((request.params as { id: string }).id);
+    const examId = Number(
+      (request.params as { id: string }).id,
+    );
 
     if (!Number.isInteger(examId) || examId <= 0) {
       return reply.code(400).send({
@@ -69,9 +73,22 @@ export async function examRoute(app: FastifyInstance) {
       });
     }
 
-    const posts = await db.orm.public.Post
+    const records = await db.orm.public.Post
       .where({ examId })
       .all();
+
+    const posts = records.map((post) => ({
+      id: post.id,
+      examId: post.examId,
+      name: post.name,
+      code: post.code,
+      department: post.department,
+      vacancies: post.vacancies,
+      qualification: post.qualification,
+      description: post.description,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+    }));
 
     return reply.send({
       posts,

@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -145,6 +144,30 @@ function groupExamResults(
   return Array.from(groups.values());
 }
 
+function getUniqueSources(
+  posts: ExamResult[],
+): Source[] {
+  const sources = posts.flatMap(
+    (result) => result.sources ?? [],
+  );
+
+  return Array.from(
+    new Map(
+      sources.map((source) => [
+        source.id,
+        source,
+      ]),
+    ).values(),
+  );
+}
+
+function cleanReason(reason: string): string {
+  return reason.replace(
+    /^Requirement (?:not )?satisfied:\s*/i,
+    "",
+  );
+}
+
 export default function Home() {
   const router = useRouter();
 
@@ -203,14 +226,6 @@ export default function Home() {
       const data =
         (await response.json()) as ApiResponse;
 
-      /*
-       * Hide the development-only notification
-       * test exam from the student dashboard.
-       *
-       * We use the exam name instead of the ID
-       * so this keeps working even if the database
-       * ID changes later.
-       */
       const presentationResults =
         (data.results ?? []).filter(
           (result) =>
@@ -408,8 +423,7 @@ export default function Home() {
           </form>
 
           <p className={styles.demoText}>
-            Development test account is
-            pre-filled.
+            Development test account is pre-filled.
           </p>
         </section>
       </main>
@@ -462,9 +476,7 @@ export default function Home() {
             type="button"
             className={styles.profileButton}
             onClick={() =>
-              router.push(
-                "/student/profile",
-              )
+              router.push("/student/profile")
             }
           >
             Profile
@@ -527,8 +539,7 @@ export default function Home() {
           <div className={styles.spinner} />
 
           <p>
-            Checking your
-            eligibility...
+            Checking your eligibility...
           </p>
         </section>
       )}
@@ -553,44 +564,26 @@ export default function Home() {
 
       {!loading && !error && (
         <>
-          <section
-            className={styles.sectionHeader}
-          >
+          <section className={styles.sectionHeader}>
             <div>
-              <p
-                className={
-                  styles.sectionEyebrow
-                }
-              >
+              <p className={styles.sectionEyebrow}>
                 Your Results
               </p>
 
               <h2>
-                Eligible Government
-                Exams
+                Eligible Government Exams
               </h2>
             </div>
 
-            <span
-              className={
-                styles.resultCount
-              }
-            >
-              {eligibleExams.length}{" "}
-              result
-              {eligibleExams.length !== 1
-                ? "s"
-                : ""}
+            <span className={styles.resultCount}>
+              {eligibleExams.length} result
+              {eligibleExams.length !== 1 ? "s" : ""}
             </span>
           </section>
 
           {eligibleExams.length === 0 && (
-            <section
-              className={styles.emptyCard}
-            >
-              <div
-                className={styles.emptyIcon}
-              >
+            <section className={styles.emptyCard}>
+              <div className={styles.emptyIcon}>
                 !
               </div>
 
@@ -599,38 +592,29 @@ export default function Home() {
               </h3>
 
               <p>
-                Update your student
-                profile and education
-                details to check again.
+                Update your student profile and
+                education details to check again.
               </p>
             </section>
           )}
 
-          <section
-            className={styles.examGrid}
-          >
-            {eligibleExams.map(
-              (group) => (
+          <section className={styles.examGrid}>
+            {eligibleExams.map((group) => {
+              const sources = getUniqueSources(
+                group.posts,
+              );
+
+              return (
                 <article
                   key={group.exam.id}
                   className={styles.examCard}
                 >
-                  <div
-                    className={styles.cardTop}
-                  >
-                    <span
-                      className={
-                        styles.eligibleBadge
-                      }
-                    >
+                  <div className={styles.cardTop}>
+                    <span className={styles.eligibleBadge}>
                       ✓ Eligible
                     </span>
 
-                    <span
-                      className={
-                        styles.examType
-                      }
-                    >
+                    <span className={styles.examType}>
                       {group.exam.examType}
                     </span>
                   </div>
@@ -639,121 +623,210 @@ export default function Home() {
                     {group.exam.name}
                   </h3>
 
-                  <p
-                    className={
-                      styles.organization
-                    }
-                  >
+                  <p className={styles.organization}>
                     {group.exam.conductingBody}
                   </p>
 
-                  <div
-                    className={
-                      styles.postBox
-                    }
-                  >
-                    <span
-                      className={
-                        styles.fieldLabel
-                      }
+                  {group.exam.description && (
+                    <p
+                      style={{
+                        color: "#697386",
+                        fontSize: "13px",
+                        lineHeight: 1.6,
+                        marginTop: "10px",
+                      }}
                     >
-                      Eligible Posts
+                      {group.exam.description}
+                    </p>
+                  )}
+
+                  <div className={styles.postBox}>
+                    <span className={styles.fieldLabel}>
+                      Posts & Qualification
                     </span>
 
-                    {group.posts
-                      .filter(
-                        (result) =>
-                          result.eligible,
-                      )
-                      .map((result) => (
-                        <div
-                          key={
-                            result.post?.id ??
-                            result.exam.id
+                    {group.posts.map((result) => (
+                      <div
+                        key={
+                          result.post?.id ??
+                          result.exam.id
+                        }
+                        className={styles.postRow}
+                        style={{
+                          alignItems: "flex-start",
+                          marginTop: "12px",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        <span
+                          aria-label={
+                            result.eligible
+                              ? "Eligible"
+                              : "Not eligible"
                           }
-                          className={
-                            styles.postRow
-                          }
+                          style={{
+                            color: result.eligible
+                              ? "#237a46"
+                              : "#b34444",
+                            fontWeight: 700,
+                          }}
                         >
-                          <span>
-                            ✓
-                          </span>
+                          {result.eligible ? "✓" : "✕"}
+                        </span>
 
+                        <div
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
                           <strong>
-                            {result.post
-                              ?.name ??
+                            {result.post?.name ??
                               "Exam Level Eligibility"}
                           </strong>
+
+                          {result.post?.department && (
+                            <p
+                              style={{
+                                fontSize: "12px",
+                                color: "#697386",
+                                marginTop: "4px",
+                              }}
+                            >
+                              Department: {result.post.department}
+                            </p>
+                          )}
+
+                          {result.post?.qualification && (
+                            <p
+                              style={{
+                                fontSize: "12px",
+                                lineHeight: 1.6,
+                                color: "#697386",
+                                marginTop: "5px",
+                                overflowWrap: "anywhere",
+                              }}
+                            >
+                              Qualification:{" "}
+                              {result.post.qualification}
+                            </p>
+                          )}
+
+                          {result.post?.vacancies != null && (
+                            <p
+                              style={{
+                                fontSize: "12px",
+                                color: "#697386",
+                                marginTop: "5px",
+                              }}
+                            >
+                              Vacancies: {result.post.vacancies}
+                            </p>
+                          )}
+
+                          <span
+                            className={`${styles.statusBadge} ${
+                              result.eligible
+                                ? styles.statusOpen
+                                : styles.statusClosed
+                            }`}
+                            style={{
+                              marginTop: "7px",
+                            }}
+                          >
+                            {result.eligible
+                              ? "ELIGIBLE"
+                              : "NOT ELIGIBLE"}
+                          </span>
                         </div>
-                      ))}
+                      </div>
+                    ))}
                   </div>
 
-                  <div
-                    className={styles.reasons}
-                  >
-                    <span
-                      className={
-                        styles.fieldLabel
-                      }
-                    >
-                      Eligibility
+                  <div className={styles.reasons}>
+                    <span className={styles.fieldLabel}>
+                      Eligibility by Post
                     </span>
 
-                    {group.posts
-                      .filter(
-                        (result) =>
-                          result.eligible,
-                      )
-                      .flatMap(
-                        (result) =>
-                          result.reasons,
-                      )
-                      .filter(
-                        (
-                          reason,
-                          index,
-                          all,
-                        ) =>
-                          all.indexOf(
-                            reason,
-                          ) === index,
-                      )
-                      .map(
-                        (
-                          reason,
-                          index,
-                        ) => (
+                    {group.posts.map((result) => (
+                      <div
+                        key={`reasons-${
+                          result.post?.id ??
+                          result.exam.id
+                        }`}
+                        style={{
+                          paddingTop: "10px",
+                          paddingBottom: "10px",
+                          borderBottom: "1px solid #edf0f5",
+                        }}
+                      >
+                        <p
+                          style={{
+                            color: "#253047",
+                            fontSize: "13px",
+                            fontWeight: 700,
+                            lineHeight: 1.5,
+                            marginBottom: "8px",
+                          }}
+                        >
+                          {result.post?.name ??
+                            "Exam Level Eligibility"}
+                          {" — "}
+                          {result.eligible
+                            ? "Eligible"
+                            : "Not Eligible"}
+                        </p>
+
+                        {result.reasons.length > 0 ? (
+                          result.reasons.map(
+                            (reason, index) => (
+                              <p
+                                key={`${
+                                  result.post?.id ??
+                                  result.exam.id
+                                }-${index}`}
+                                className={
+                                  result.eligible
+                                    ? styles.reasonPassed
+                                    : styles.reasonFailed
+                                }
+                                style={{
+                                  fontSize: "13px",
+                                  lineHeight: 1.6,
+                                  overflowWrap: "anywhere",
+                                }}
+                              >
+                                {result.eligible
+                                  ? "✓ "
+                                  : "✕ "}
+                                {cleanReason(reason)}
+                              </p>
+                            ),
+                          )
+                        ) : (
                           <p
-                            key={`${reason}-${index}`}
                             className={
-                              styles.reasonPassed
+                              result.eligible
+                                ? styles.reasonPassed
+                                : styles.reasonFailed
                             }
                           >
-                            ✓{" "}
-                            {reason.replace(
-                              /^Requirement satisfied:\s*/,
-                              "",
-                            )}
+                            {result.eligible
+                              ? "Eligibility requirements satisfied."
+                              : "The eligibility requirements were not satisfied."}
                           </p>
-                        ),
-                      )}
+                        )}
+                      </div>
+                    ))}
                   </div>
 
                   {group.posts.some(
                     (result) =>
-                      result.deadlines.length >
-                      0,
+                      result.eligible &&
+                      result.deadlines.length > 0,
                   ) && (
-                    <div
-                      className={
-                        styles.deadlineBox
-                      }
-                    >
-                      <span
-                        className={
-                          styles.fieldLabel
-                        }
-                      >
+                    <div className={styles.deadlineBox}>
+                      <span className={styles.fieldLabel}>
                         Application
                       </span>
 
@@ -761,32 +834,26 @@ export default function Home() {
                         .filter(
                           (result) =>
                             result.eligible &&
-                            result.deadlines
-                              .length > 0,
+                            result.deadlines.length > 0,
                         )
-                        .flatMap(
-                          (result) =>
-                            result.deadlines.map(
-                              (
-                                deadline,
-                              ) => ({
-                                ...deadline,
-                                postName:
-                                  result.post
-                                    ?.name ??
-                                  "Exam Level",
-                              }),
-                            ),
+                        .flatMap((result) =>
+                          result.deadlines.map(
+                            (deadline) => ({
+                              ...deadline,
+                              postName:
+                                result.post?.name ??
+                                "Exam Level",
+                            }),
+                          ),
                         )
                         .map(
                           (
                             deadline,
+                            deadlineIndex,
                           ) => (
                             <div
-                              key={`${deadline.id}-${deadline.postName}`}
-                              className={
-                                styles.deadlineItem
-                              }
+                              key={`${deadline.id}-${deadline.postName}-${deadlineIndex}`}
+                              className={styles.deadlineItem}
                             >
                               <div>
                                 <span
@@ -794,19 +861,11 @@ export default function Home() {
                                     deadline.status,
                                   )}`}
                                 >
-                                  {
-                                    deadline.status
-                                  }
+                                  {deadline.status}
                                 </span>
 
-                                <p
-                                  className={
-                                    styles.deadlinePost
-                                  }
-                                >
-                                  {
-                                    deadline.postName
-                                  }
+                                <p className={styles.deadlinePost}>
+                                  {deadline.postName}
                                 </p>
 
                                 <p>
@@ -817,6 +876,17 @@ export default function Home() {
                                     )}
                                   </strong>
                                 </p>
+
+                                {deadline.applicationStart && (
+                                  <p>
+                                    Start Date:{" "}
+                                    <strong>
+                                      {formatDate(
+                                        deadline.applicationStart,
+                                      )}
+                                    </strong>
+                                  </p>
+                                )}
 
                                 {deadline.examDate && (
                                   <p>
@@ -850,54 +920,79 @@ export default function Home() {
                     </div>
                   )}
 
-                  {group.posts[0]?.sources
-                    .length > 0 && (
-                    <div
-                      className={
-                        styles.sourceBox
-                      }
-                    >
-                      <span
-                        className={
-                          styles.fieldLabel
-                        }
-                      >
+                  {(sources.length > 0 ||
+                    group.exam.officialWebsite) && (
+                    <div className={styles.sourceBox}>
+                      <span className={styles.fieldLabel}>
                         Official Source
                       </span>
 
-                      <p>
-                        {
-                          group.posts[0]
-                            .sources[0]
-                            .organization
-                        }
-                      </p>
+                      {sources.length > 0 ? (
+                        sources.map((source) => (
+                          <div
+                            key={source.id}
+                            style={{
+                              marginTop: "8px",
+                              marginBottom: "12px",
+                            }}
+                          >
+                            <p>
+                              {source.organization}
+                            </p>
 
-                      <a
-                        href={
-                          group.posts[0]
-                            .sources[0]
-                            .officialUrl
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        View official
-                        notification
-                      </a>
+                            <p>
+                              {source.notificationTitle}
+                            </p>
+
+                            {source.notificationDate && (
+                              <p
+                                style={{
+                                  color: "#697386",
+                                  fontSize: "12px",
+                                }}
+                              >
+                                Notification Date:{" "}
+                                {formatDate(
+                                  source.notificationDate,
+                                )}
+                              </p>
+                            )}
+
+                            <a
+                              href={source.officialUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              View official notification →
+                            </a>
+                          </div>
+                        ))
+                      ) : (
+                        <div>
+                          <p>
+                            {group.exam.conductingBody}
+                          </p>
+
+                          {group.exam.officialWebsite && (
+                            <a
+                              href={
+                                group.exam.officialWebsite
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Visit official website →
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  <div
-                    className={
-                      styles.detailsAction
-                    }
-                  >
+                  <div className={styles.detailsAction}>
                     <button
                       type="button"
-                      className={
-                        styles.detailsButton
-                      }
+                      className={styles.detailsButton}
                       onClick={() =>
                         router.push(
                           `/student/exam/${group.exam.id}`,
@@ -908,9 +1003,207 @@ export default function Home() {
                     </button>
                   </div>
                 </article>
-              ),
-            )}
+              );
+            })}
           </section>
+
+          {ineligibleExams.length > 0 && (
+            <>
+              <section className={styles.sectionHeader}>
+                <div>
+                  <p className={styles.sectionEyebrow}>
+                    Eligibility Review
+                  </p>
+
+                  <h2>
+                    Other Government Exams
+                  </h2>
+                </div>
+
+                <span className={styles.resultCount}>
+                  {ineligibleExams.length} result
+                  {ineligibleExams.length !== 1 ? "s" : ""}
+                </span>
+              </section>
+
+              <section className={styles.examGrid}>
+                {ineligibleExams.map((group) => {
+                  const sources = getUniqueSources(
+                    group.posts,
+                  );
+
+                  return (
+                    <article
+                      key={group.exam.id}
+                      className={styles.examCard}
+                    >
+                      <div className={styles.cardTop}>
+                        <span
+                          className={`${styles.statusBadge} ${styles.statusClosed}`}
+                        >
+                          Not Eligible
+                        </span>
+
+                        <span className={styles.examType}>
+                          {group.exam.examType}
+                        </span>
+                      </div>
+
+                      <h3>{group.exam.name}</h3>
+
+                      <p className={styles.organization}>
+                        {group.exam.conductingBody}
+                      </p>
+
+                      <div className={styles.postBox}>
+                        <span className={styles.fieldLabel}>
+                          Posts & Qualification
+                        </span>
+
+                        {group.posts.map((result) => (
+                          <div
+                            key={
+                              result.post?.id ??
+                              result.exam.id
+                            }
+                            className={styles.postRow}
+                            style={{
+                              alignItems: "flex-start",
+                              marginTop: "12px",
+                              marginBottom: "12px",
+                            }}
+                          >
+                            <span
+                              style={{
+                                color: "#b34444",
+                                fontWeight: 700,
+                              }}
+                            >
+                              ✕
+                            </span>
+
+                            <div
+                              style={{
+                                flex: 1,
+                                minWidth: 0,
+                              }}
+                            >
+                              <strong>
+                                {result.post?.name ??
+                                  "Exam Level Eligibility"}
+                              </strong>
+
+                              {result.post?.qualification && (
+                                <p
+                                  style={{
+                                    fontSize: "12px",
+                                    lineHeight: 1.6,
+                                    color: "#697386",
+                                    marginTop: "5px",
+                                    overflowWrap: "anywhere",
+                                  }}
+                                >
+                                  Qualification:{" "}
+                                  {result.post.qualification}
+                                </p>
+                              )}
+
+                              <span
+                                className={`${styles.statusBadge} ${styles.statusClosed}`}
+                                style={{
+                                  marginTop: "7px",
+                                }}
+                              >
+                                NOT ELIGIBLE
+                              </span>
+
+                              {result.reasons.map(
+                                (reason, index) => (
+                                  <p
+                                    key={`${
+                                      result.post?.id ??
+                                      result.exam.id
+                                    }-${index}`}
+                                    className={
+                                      styles.reasonFailed
+                                    }
+                                    style={{
+                                      fontSize: "13px",
+                                      lineHeight: 1.6,
+                                      marginTop: "7px",
+                                    }}
+                                  >
+                                    {cleanReason(reason)}
+                                  </p>
+                                ),
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {(sources.length > 0 ||
+                        group.exam.officialWebsite) && (
+                        <div className={styles.sourceBox}>
+                          <span className={styles.fieldLabel}>
+                            Official Source
+                          </span>
+
+                          {sources.length > 0 ? (
+                            sources.map((source) => (
+                              <div key={source.id}>
+                                <p>
+                                  {source.organization}
+                                </p>
+
+                                <p>
+                                  {source.notificationTitle}
+                                </p>
+
+                                <a
+                                  href={source.officialUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  View official notification →
+                                </a>
+                              </div>
+                            ))
+                          ) : (
+                            group.exam.officialWebsite && (
+                              <a
+                                href={
+                                  group.exam.officialWebsite
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Visit official website →
+                              </a>
+                            )
+                          )}
+                        </div>
+                      )}
+
+                      <div className={styles.detailsAction}>
+                        <button
+                          type="button"
+                          className={styles.detailsButton}
+                          onClick={() =>
+                            router.push(
+                              `/student/exam/${group.exam.id}`,
+                            )
+                          }
+                        >
+                          View Details →
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </section>
+            </>
+          )}
         </>
       )}
     </main>
