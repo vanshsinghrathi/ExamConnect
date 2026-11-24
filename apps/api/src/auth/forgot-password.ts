@@ -24,6 +24,24 @@ export function hashResetToken(token: string): string {
   return createHash("sha256").update(token.trim()).digest("hex");
 }
 
+/** Public frontend used in emailed links when APP_URL is not set. */
+export const DEFAULT_PRODUCTION_APP_URL = "https://exam-connect-ivory.vercel.app";
+const DEFAULT_DEVELOPMENT_APP_URL = "http://localhost:3000";
+
+/**
+ * Base URL of the frontend for links in emails (e.g. /reset-password).
+ * APP_URL (or NEXT_PUBLIC_APP_URL) overrides; blank values are ignored.
+ */
+export function getAppBaseUrl(): string {
+  const configured =
+    process.env.APP_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const fallback =
+    process.env.NODE_ENV === "production"
+      ? DEFAULT_PRODUCTION_APP_URL
+      : DEFAULT_DEVELOPMENT_APP_URL;
+  return (configured || fallback).replace(/\/+$/, "");
+}
+
 const GENERIC_SUCCESS_MESSAGE =
   "If an active account is registered with that email address, a password reset link has been sent.";
 
@@ -103,13 +121,7 @@ export async function forgotPasswordRoute(app: FastifyInstance) {
         expiresAt,
       });
 
-      const appBaseUrl = (
-        process.env.APP_URL ??
-        process.env.NEXT_PUBLIC_APP_URL ??
-        "http://localhost:3000"
-      ).replace(/\/+$/, "");
-
-      const resetUrl = `${appBaseUrl}/reset-password?token=${encodeURIComponent(rawToken)}`;
+      const resetUrl = `${getAppBaseUrl()}/reset-password?token=${encodeURIComponent(rawToken)}`;
 
       const delivery = await sendPasswordResetEmail({
         to: user.email,

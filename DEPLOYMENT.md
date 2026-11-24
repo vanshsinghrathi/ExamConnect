@@ -15,8 +15,8 @@ Never commit `.env` files or real credentials to Git. Configure these variables 
 | `HOST` | Yes | Bind address (`0.0.0.0` in containers/cloud) |
 | `DATABASE_URL` | Yes | PostgreSQL 17 connection URI (`sslmode=require` recommended in prod) |
 | `REDIS_HOST` / `REDIS_PORT` | Worker | Redis connection for BullMQ job scheduling |
-| `APP_URL` | Yes | Public frontend URL (e.g. `https://examconnect.example.com`) used to build password reset links |
-| `CORS_ORIGINS` | Yes | Comma-separated allowed frontend origins |
+| `APP_URL` | Recommended | Public frontend URL used to build password reset links. Defaults to `https://exam-connect-ivory.vercel.app` in production and `http://localhost:3000` in development |
+| `CORS_ORIGINS` | Yes | Comma-separated allowed frontend origins (e.g. `https://exam-connect-ivory.vercel.app`) |
 | `COOKIE_SECURE` | Yes | Set `true` over HTTPS (enables `Secure` + `SameSite=None` for cross-origin APIs) |
 | `BREVO_API_KEY` | One of Brevo or SMTP | Brevo API key (`xkeysib-...`). When set, email goes over HTTPS via Brevo instead of SMTP |
 | `EMAIL_FROM` | With Brevo | Verified Brevo sender, e.g. `ExamConnect Security <no-reply@yourdomain.com>` (falls back to `SMTP_FROM`) |
