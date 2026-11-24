@@ -17,4 +17,4 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 EXPOSE 4000
 
-CMD ["sh", "-c", "pnpm --filter @examconnect/database exec prisma db update --yes && pnpm --filter @examconnect/api seed:exams && pnpm --filter @examconnect/api start"]
+CMD ["sh", "-c", "pnpm --filter @examconnect/database exec prisma db migrate && pnpm --filter @examconnect/api seed:exams && pnpm --filter @examconnect/api start"]
