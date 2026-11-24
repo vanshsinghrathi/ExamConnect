@@ -49,11 +49,11 @@ export async function forgotPasswordRoute(app: FastifyInstance) {
         });
       }
 
-      // In production, never claim an email was sent when no real SMTP provider is
+      // In production, never claim an email was sent when no real email provider is
       // configured. Ethereal captures mail without delivering it, so it is rejected too.
       if (process.env.NODE_ENV === "production" && !canDeliverRealEmail()) {
         app.log.error(
-          "Password reset requested in production, but no real SMTP provider is configured (SMTP is missing or points at Ethereal).",
+          "Password reset requested in production, but no real email provider is configured (set BREVO_API_KEY + EMAIL_FROM, or SMTP_* for a real SMTP server; Ethereal is not allowed).",
         );
         return reply.code(503).send({
           error: "EMAIL_SERVICE_UNCONFIGURED",
@@ -135,7 +135,12 @@ export async function forgotPasswordRoute(app: FastifyInstance) {
         });
       }
 
-      if (delivery.mode === "smtp") {
+      if (delivery.mode === "brevo") {
+        app.log.info(
+          { mode: delivery.mode, messageId: delivery.messageId },
+          "Password reset email SENT via Brevo API and accepted for delivery.",
+        );
+      } else if (delivery.mode === "smtp") {
         app.log.info(
           { mode: delivery.mode, messageId: delivery.messageId },
           "Password reset email SENT via SMTP and accepted by the mail server.",

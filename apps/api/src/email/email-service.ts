@@ -10,12 +10,14 @@ export type SmtpConfig = {
 };
 
 /**
+ * - "brevo": Brevo's transactional email HTTPS API (BREVO_API_KEY). Works on hosts that
+ *   block outbound SMTP ports (Render free tier, Railway Hobby). Takes priority over SMTP.
  * - "smtp": a real SMTP provider delivers mail to real inboxes.
  * - "ethereal": mail is captured by Ethereal (https://ethereal.email) and never delivered;
  *   each message gets a preview URL. Used for development and testing only.
  * - "unconfigured": no delivery possible (production without SMTP).
  */
-export type EmailMode = "smtp" | "ethereal" | "unconfigured";
+export type EmailMode = "brevo" | "smtp" | "ethereal" | "unconfigured";
 
 export type EmailDeliveryResult = {
   delivered: boolean;
@@ -62,16 +64,61 @@ export function isSmtpConfigured(): boolean {
   return getSmtpConfigFromEnv() !== null;
 }
 
+export const BREVO_SEND_URL = "https://api.brevo.com/v3/smtp/email";
+
+export type EmailAddress = { email: string; name?: string };
+
+export type BrevoConfig = {
+  apiKey: string;
+  sender: EmailAddress;
+};
+
+/**
+ * Parses `Name <email@example.com>`, `"Name" <email@example.com>` or a bare address.
+ */
+export function parseEmailAddress(value: string): EmailAddress | null {
+  const trimmed = value.trim().replace(/^"(.*)"$/, "$1").trim();
+  const match = trimmed.match(/^(.*?)\s*<([^<>\s]+@[^<>\s]+)>$/);
+  if (match) {
+    const name = match[1].trim().replace(/^"(.*)"$/, "$1").trim();
+    return name ? { email: match[2], name } : { email: match[2] };
+  }
+  return /^[^\s<>@]+@[^\s<>@]+$/.test(trimmed) ? { email: trimmed } : null;
+}
+
+/**
+ * Brevo is used when BREVO_API_KEY is set. The sender comes from EMAIL_FROM
+ * (falling back to SMTP_FROM) and must be a verified sender in Brevo.
+ */
+export function getBrevoConfigFromEnv(): BrevoConfig | null {
+  const apiKey = process.env.BREVO_API_KEY?.trim();
+  if (!apiKey) {
+    return null;
+  }
+  const fromRaw = process.env.EMAIL_FROM?.trim() || process.env.SMTP_FROM?.trim() || "";
+  const sender = parseEmailAddress(fromRaw);
+  if (!sender) {
+    return null;
+  }
+  return { apiKey, sender };
+}
+
 /**
  * Whether password reset emails can reach real inboxes in production.
  * Ethereal never delivers mail, so it does not count.
  */
 export function canDeliverRealEmail(): boolean {
+  if (getBrevoConfigFromEnv()) {
+    return true;
+  }
   const config = getSmtpConfigFromEnv();
   return config !== null && !isEtherealHost(config.host);
 }
 
 export function getEmailMode(): EmailMode {
+  if (getBrevoConfigFromEnv()) {
+    return "brevo";
+  }
   const config = getSmtpConfigFromEnv();
   if (config) {
     return isEtherealHost(config.host) ? "ethereal" : "smtp";
@@ -224,6 +271,72 @@ export function renderPasswordResetEmail(params: {
   return { subject, text, html };
 }
 
+const BREVO_TIMEOUT_MS = 15_000;
+
+/**
+ * Sends one email through Brevo's transactional API over HTTPS.
+ * Docs: https://developers.brevo.com/reference/sendtransacemail
+ * Success is HTTP 201 with {"messageId": "..."}; errors return {"code", "message"}.
+ */
+export async function sendViaBrevo(
+  config: BrevoConfig,
+  message: { to: string; subject: string; html: string },
+  fetchImpl: typeof fetch = fetch,
+): Promise<EmailDeliveryResult> {
+  let response: Response;
+  try {
+    response = await fetchImpl(BREVO_SEND_URL, {
+      method: "POST",
+      headers: {
+        "api-key": config.apiKey,
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        sender: config.sender,
+        to: [{ email: message.to }],
+        subject: message.subject,
+        htmlContent: message.html,
+      }),
+      signal: AbortSignal.timeout(BREVO_TIMEOUT_MS),
+    });
+  } catch (error) {
+    const timedOut = error instanceof Error && error.name === "TimeoutError";
+    return {
+      delivered: false,
+      mode: "brevo",
+      error: timedOut
+        ? `Brevo API did not respond within ${BREVO_TIMEOUT_MS / 1000}s.`
+        : `Could not reach Brevo API: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+
+  const bodyText = await response.text().catch(() => "");
+  let body: { messageId?: string; code?: string; message?: string } = {};
+  try {
+    body = bodyText ? JSON.parse(bodyText) : {};
+  } catch {
+    // non-JSON body; reported below as raw text
+  }
+
+  if (!response.ok) {
+    const detail = body.message
+      ? `${body.code ?? "error"}: ${body.message}`
+      : bodyText.slice(0, 300) || response.statusText;
+    return {
+      delivered: false,
+      mode: "brevo",
+      error: `Brevo API rejected the email (HTTP ${response.status}) — ${detail}`,
+    };
+  }
+
+  return {
+    delivered: true,
+    mode: "brevo",
+    ...(body.messageId ? { messageId: body.messageId } : {}),
+  };
+}
+
 export async function sendPasswordResetEmail(params: {
   to: string;
   resetUrl: string;
@@ -234,6 +347,19 @@ export async function sendPasswordResetEmail(params: {
     expiresMinutes: params.expiresMinutes,
     recipientEmail: params.to,
   });
+
+  if (process.env.BREVO_API_KEY?.trim()) {
+    const brevo = getBrevoConfigFromEnv();
+    if (!brevo) {
+      return {
+        delivered: false,
+        mode: "brevo",
+        error:
+          "BREVO_API_KEY is set but EMAIL_FROM (or SMTP_FROM) is missing or not a valid address, e.g. \"ExamConnect <you@example.com>\".",
+      };
+    }
+    return sendViaBrevo(brevo, { to: params.to, ...rendered });
+  }
 
   let config: SmtpConfig | null;
   try {

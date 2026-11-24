@@ -18,7 +18,9 @@ Never commit `.env` files or real credentials to Git. Configure these variables 
 | `APP_URL` | Yes | Public frontend URL (e.g. `https://examconnect.example.com`) used to build password reset links |
 | `CORS_ORIGINS` | Yes | Comma-separated allowed frontend origins |
 | `COOKIE_SECURE` | Yes | Set `true` over HTTPS (enables `Secure` + `SameSite=None` for cross-origin APIs) |
-| `SMTP_HOST` | Yes (for reset mail) | SMTP server hostname (e.g. `smtp.resend.com`, `smtp.sendgrid.net`, `email-smtp.ap-south-1.amazonaws.com`) |
+| `BREVO_API_KEY` | One of Brevo or SMTP | Brevo API key (`xkeysib-...`). When set, email goes over HTTPS via Brevo instead of SMTP |
+| `EMAIL_FROM` | With Brevo | Verified Brevo sender, e.g. `ExamConnect Security <no-reply@yourdomain.com>` (falls back to `SMTP_FROM`) |
+| `SMTP_HOST` | One of Brevo or SMTP | SMTP server hostname (e.g. `smtp.resend.com`, `smtp.sendgrid.net`, `email-smtp.ap-south-1.amazonaws.com`) |
 | `SMTP_PORT` | Yes (for reset mail) | `587` (STARTTLS) or `465` (SMTPS/TLS) |
 | `SMTP_SECURE` | Optional | `true` for port `465`, `false` for STARTTLS on `587` |
 | `SMTP_USER` | Yes (for reset mail) | SMTP authentication username |
@@ -33,7 +35,11 @@ Never commit `.env` files or real credentials to Git. Configure these variables 
 
 ## 2. Email Delivery Behavior (Forgot Password)
 
-Mail is sent with [Nodemailer](https://nodemailer.com) (`apps/api/src/email/email-service.ts`) using the `SMTP_*` variables.
+Mail is sent by `apps/api/src/email/email-service.ts`, using the first provider that is configured:
+
+1. **Brevo HTTPS API** — when `BREVO_API_KEY` is set. Sender comes from `EMAIL_FROM` (falls back to `SMTP_FROM`) and must be verified at https://app.brevo.com/senders. **Use this on Render free and Railway Hobby**, which block outbound SMTP ports 25/465/587; HTTPS is not blocked. Free plan: 300 emails/day.
+2. **SMTP via [Nodemailer](https://nodemailer.com)** — when `SMTP_HOST` and `SMTP_FROM` are set (Gmail, SES, Resend SMTP, ...). Needs a host that allows outbound SMTP.
+3. **Ethereal** — development only (see below).
 
 - **Production (`NODE_ENV=production`)**:
   - Requires a real SMTP provider. If SMTP credentials are missing **or point at Ethereal** (`smtp.ethereal.email`, which never delivers mail), `POST /auth/forgot-password` returns HTTP `503` and logs an operational error. It **never** claims an email was sent when delivery fails.

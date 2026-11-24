@@ -105,14 +105,16 @@ function AdminHealthContent() {
           <div style={{ marginTop: 8 }}>
             <GenericBadge
               label={
-                data.email.mode === "smtp"
+                data.email.mode === "brevo"
+                  ? "Brevo API Configured"
+                  : data.email.mode === "smtp"
                   ? "SMTP Configured"
                   : data.email.mode === "ethereal"
                     ? "Ethereal Test Inbox"
                     : "SMTP Unconfigured"
               }
               tone={
-                data.email.mode === "smtp"
+                data.email.mode === "brevo" || data.email.mode === "smtp"
                   ? "success"
                   : data.email.mode === "ethereal"
                     ? "info"
@@ -121,7 +123,9 @@ function AdminHealthContent() {
             />
           </div>
           <p className={styles.fieldHint} style={{ marginTop: 10 }}>
-            {data.email.mode === "smtp"
+            {data.email.mode === "brevo"
+              ? "Emails are sent through Brevo's HTTPS API (BREVO_API_KEY)."
+              : data.email.mode === "smtp"
               ? "Outbound SMTP credentials detected."
               : data.email.mode === "ethereal"
                 ? "Emails are captured by Ethereal (ethereal.email) and never delivered. Set SMTP_* to a real provider for live delivery."
