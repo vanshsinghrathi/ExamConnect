@@ -4,7 +4,7 @@ import { z } from "zod";
 import { db } from "@examconnect/database";
 
 import { requireAuth, requireRole } from "./auth/guards.js";
-import { isSmtpConfigured } from "./email/email-service.js";
+import { getEmailMode, isSmtpConfigured } from "./email/email-service.js";
 import {
   calculateApplicationStatus,
   computeStudentEligibility,
@@ -912,11 +912,7 @@ export async function adminManagementRoute(app: FastifyInstance) {
         },
         email: {
           smtpConfigured: isSmtpConfigured(),
-          mode: isSmtpConfigured()
-            ? "smtp"
-            : process.env.NODE_ENV === "production"
-              ? "unconfigured"
-              : "dev-mailbox",
+          mode: getEmailMode(),
         },
         redis: {
           configured: Boolean(process.env.REDIS_HOST || process.env.REDIS_URL),

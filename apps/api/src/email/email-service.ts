@@ -1,13 +1,35 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { sendSmtpMail, type SmtpConfig } from "./smtp-client.js";
+import nodemailer, { type Mail } from "nodemailer";
+
+export type SmtpConfig = {
+  host: string;
+  port: number;
+  secure: boolean;
+  user?: string;
+  pass?: string;
+  from: string;
+};
+
+/**
+ * - "smtp": a real SMTP provider delivers mail to real inboxes.
+ * - "ethereal": mail is captured by Ethereal (https://ethereal.email) and never delivered;
+ *   each message gets a preview URL. Used for development and testing only.
+ * - "unconfigured": no delivery possible (production without SMTP).
+ */
+export type EmailMode = "smtp" | "ethereal" | "unconfigured";
 
 export type EmailDeliveryResult = {
   delivered: boolean;
-  mode: "smtp" | "dev-mailbox" | "unconfigured";
-  previewFile?: string;
+  mode: EmailMode;
+  messageId?: string;
+  previewUrl?: string;
   error?: string;
 };
+
+export const ETHEREAL_SMTP_HOST = "smtp.ethereal.email";
+
+export function isEtherealHost(host: string): boolean {
+  return host.trim().toLowerCase() === ETHEREAL_SMTP_HOST;
+}
 
 export function getSmtpConfigFromEnv(): SmtpConfig | null {
   const host = process.env.SMTP_HOST?.trim();
@@ -38,6 +60,79 @@ export function getSmtpConfigFromEnv(): SmtpConfig | null {
 
 export function isSmtpConfigured(): boolean {
   return getSmtpConfigFromEnv() !== null;
+}
+
+/**
+ * Whether password reset emails can reach real inboxes in production.
+ * Ethereal never delivers mail, so it does not count.
+ */
+export function canDeliverRealEmail(): boolean {
+  const config = getSmtpConfigFromEnv();
+  return config !== null && !isEtherealHost(config.host);
+}
+
+export function getEmailMode(): EmailMode {
+  const config = getSmtpConfigFromEnv();
+  if (config) {
+    return isEtherealHost(config.host) ? "ethereal" : "smtp";
+  }
+  // Outside production an Ethereal test account is created on demand.
+  return process.env.NODE_ENV === "production" ? "unconfigured" : "ethereal";
+}
+
+let autoEtherealConfig: Promise<SmtpConfig> | null = null;
+
+async function createAutoEtherealConfig(): Promise<SmtpConfig> {
+  const account = await nodemailer.createTestAccount();
+  return {
+    host: account.smtp.host,
+    port: account.smtp.port,
+    secure: account.smtp.secure,
+    user: account.user,
+    pass: account.pass,
+    from: `ExamConnect Security <${account.user}>`,
+  };
+}
+
+/**
+ * Uses SMTP_* from the environment. Outside production, if SMTP is not configured,
+ * a throwaway Ethereal account is created once per process.
+ */
+async function resolveSmtpConfig(): Promise<SmtpConfig | null> {
+  const fromEnv = getSmtpConfigFromEnv();
+  if (fromEnv) {
+    return fromEnv;
+  }
+  if (process.env.NODE_ENV === "production") {
+    return null;
+  }
+  autoEtherealConfig ??= createAutoEtherealConfig();
+  try {
+    return await autoEtherealConfig;
+  } catch (error) {
+    autoEtherealConfig = null; // allow a retry on the next request
+    throw error;
+  }
+}
+
+let cachedTransport: { key: string; transporter: Mail } | null = null;
+
+function getTransporter(config: SmtpConfig): Mail {
+  const key = JSON.stringify([config.host, config.port, config.secure, config.user, config.pass]);
+  if (cachedTransport?.key === key) {
+    return cachedTransport.transporter;
+  }
+  const transporter = nodemailer.createTransport({
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    auth: config.user && config.pass ? { user: config.user, pass: config.pass } : undefined,
+    connectionTimeout: 15_000,
+    greetingTimeout: 15_000,
+    socketTimeout: 20_000,
+  });
+  cachedTransport = { key, transporter };
+  return transporter;
 }
 
 function escapeHtml(input: string): string {
@@ -140,73 +235,52 @@ export async function sendPasswordResetEmail(params: {
     recipientEmail: params.to,
   });
 
-  const smtpConfig = getSmtpConfigFromEnv();
-
-  if (smtpConfig) {
-    try {
-      await sendSmtpMail(smtpConfig, {
-        to: params.to,
-        subject: rendered.subject,
-        text: rendered.text,
-        html: rendered.html,
-      });
-      return {
-        delivered: true,
-        mode: "smtp",
-      };
-    } catch (error) {
-      return {
-        delivered: false,
-        mode: "smtp",
-        error: error instanceof Error ? error.message : "SMTP delivery failed.",
-      };
-    }
+  let config: SmtpConfig | null;
+  try {
+    config = await resolveSmtpConfig();
+  } catch (error) {
+    return {
+      delivered: false,
+      mode: "ethereal",
+      error: `Could not create an Ethereal test account: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    };
   }
 
-  // Safe local development mail flow ONLY outside production
-  if (process.env.NODE_ENV !== "production") {
-    try {
-      const mailboxDir = path.resolve(process.cwd(), ".dev-mailbox");
-      await mkdir(mailboxDir, { recursive: true });
-      const previewFile = path.join(mailboxDir, "latest-password-reset.json");
-      const htmlFile = path.join(mailboxDir, "latest-password-reset.html");
-
-      await writeFile(
-        previewFile,
-        JSON.stringify(
-          {
-            createdAt: new Date().toISOString(),
-            to: params.to,
-            subject: rendered.subject,
-            resetUrl: params.resetUrl,
-            expiresMinutes: params.expiresMinutes,
-            note: "Local development mail capture (SMTP not configured). Configure SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS/SMTP_FROM for real email delivery.",
-          },
-          null,
-          2,
-        ),
-        "utf8",
-      );
-      await writeFile(htmlFile, rendered.html, "utf8");
-
-      return {
-        delivered: true,
-        mode: "dev-mailbox",
-        previewFile,
-      };
-    } catch (error) {
-      return {
-        delivered: false,
-        mode: "dev-mailbox",
-        error: error instanceof Error ? error.message : "Failed to write dev mailbox.",
-      };
-    }
+  if (!config) {
+    return {
+      delivered: false,
+      mode: "unconfigured",
+      error:
+        "Email service is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM.",
+    };
   }
 
-  return {
-    delivered: false,
-    mode: "unconfigured",
-    error:
-      "Email service is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM.",
-  };
+  const mode: EmailMode = isEtherealHost(config.host) ? "ethereal" : "smtp";
+
+  try {
+    const info = await getTransporter(config).sendMail({
+      from: config.from,
+      to: params.to,
+      subject: rendered.subject,
+      text: rendered.text,
+      html: rendered.html,
+    });
+
+    const previewUrl = mode === "ethereal" ? nodemailer.getTestMessageUrl(info) : false;
+
+    return {
+      delivered: true,
+      mode,
+      messageId: info.messageId,
+      ...(previewUrl ? { previewUrl } : {}),
+    };
+  } catch (error) {
+    return {
+      delivered: false,
+      mode,
+      error: error instanceof Error ? error.message : "SMTP delivery failed.",
+    };
+  }
 }

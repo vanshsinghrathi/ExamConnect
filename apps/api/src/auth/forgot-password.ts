@@ -5,7 +5,7 @@ import type { FastifyInstance } from "fastify";
 import { db } from "@examconnect/database";
 
 import {
-  isSmtpConfigured,
+  canDeliverRealEmail,
   sendPasswordResetEmail,
 } from "../email/email-service.js";
 import { createRateLimiter } from "../security.js";
@@ -49,10 +49,11 @@ export async function forgotPasswordRoute(app: FastifyInstance) {
         });
       }
 
-      // In production, never claim an email was sent when SMTP is unconfigured
-      if (process.env.NODE_ENV === "production" && !isSmtpConfigured()) {
+      // In production, never claim an email was sent when no real SMTP provider is
+      // configured. Ethereal captures mail without delivering it, so it is rejected too.
+      if (process.env.NODE_ENV === "production" && !canDeliverRealEmail()) {
         app.log.error(
-          "Password reset requested in production, but SMTP credentials are not configured.",
+          "Password reset requested in production, but no real SMTP provider is configured (SMTP is missing or points at Ethereal).",
         );
         return reply.code(503).send({
           error: "EMAIL_SERVICE_UNCONFIGURED",
@@ -134,10 +135,15 @@ export async function forgotPasswordRoute(app: FastifyInstance) {
         });
       }
 
-      if (process.env.NODE_ENV !== "production" && delivery.mode === "dev-mailbox") {
+      if (delivery.mode === "smtp") {
         app.log.info(
-          { previewFile: delivery.previewFile },
-          "Development password reset email captured to local dev mailbox (SMTP not configured).",
+          { mode: delivery.mode, messageId: delivery.messageId },
+          "Password reset email SENT via SMTP and accepted by the mail server.",
+        );
+      } else if (process.env.NODE_ENV !== "production" && delivery.mode === "ethereal") {
+        app.log.info(
+          { previewUrl: delivery.previewUrl, messageId: delivery.messageId },
+          "Password reset email SENT to the Ethereal test inbox (Ethereal never forwards to the recipient's real mailbox). Open previewUrl to view it.",
         );
       }
 

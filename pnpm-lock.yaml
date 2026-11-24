@@ -28,6 +28,9 @@ importers:
       fastify:
         specifier: ^5.0.0
         version: 5.12.3
+      nodemailer:
+        specifier: ^10.6.1
+        version: 10.6.1
       zod:
         specifier: ^4.5.4
         version: 4.5.4
@@ -3373,6 +3376,10 @@ packages:
   node-releases@2.0.54:
     resolution: {integrity: sha512-YHs7BmmcsdAI5Ozuf8JZo6PT0mv2GIWC9vMfvUC3dp65M8hn7Ux8CPL+2oBI7juNuj9d0ndhTcznq2ODBps9cQ==}
     engines: {node: '>=18'}
+
+  nodemailer@10.6.1:
+    resolution: {integrity: sha512-d7kfFfS/tR4Aca+SBvRaQ+MXKNv7d2JiRe5TxaRcFT/kYMh4GGPnW9aKksTIEvyEbA7d/7HYWE4YPDEHxzJj/g==}
+    engines: {node: '>=20.0.0'}
 
   nopt@8.1.0:
     resolution: {integrity: sha512-ieGu42u/Qsa4TFktmaKEwM6MQH0pOWnaB3htzh0JRtx84+Mebc0cbZYN5bC+6WTZ4+77xrL9Pn5m7CV6VIkV7A==}
@@ -7831,6 +7838,8 @@ snapshots:
   node-gyp-build@4.8.4: {}
 
   node-releases@2.0.54: {}
+
+  nodemailer@10.6.1: {}
 
   nopt@8.1.0:
     dependencies:

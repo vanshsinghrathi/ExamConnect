@@ -33,13 +33,17 @@ Never commit `.env` files or real credentials to Git. Configure these variables 
 
 ## 2. Email Delivery Behavior (Forgot Password)
 
+Mail is sent with [Nodemailer](https://nodemailer.com) (`apps/api/src/email/email-service.ts`) using the `SMTP_*` variables.
+
 - **Production (`NODE_ENV=production`)**:
-  - Uses the built-in TLS/STARTTLS SMTP client (`apps/api/src/email/smtp-client.ts`).
-  - If SMTP credentials are missing, `POST /auth/forgot-password` returns HTTP `503` and logs an operational error. It **never** claims an email was sent when delivery fails.
+  - Requires a real SMTP provider. If SMTP credentials are missing **or point at Ethereal** (`smtp.ethereal.email`, which never delivers mail), `POST /auth/forgot-password` returns HTTP `503` and logs an operational error. It **never** claims an email was sent when delivery fails.
   - Reset tokens are **never** logged in production.
-- **Local Development (`NODE_ENV !== production`)**:
-  - If `SMTP_HOST` and `SMTP_FROM` are configured, real SMTP mail is sent.
-  - If SMTP is left blank, rendered emails (HTML + JSON including the reset URL) are written safely to `apps/api/.dev-mailbox/latest-password-reset.json` (git-ignored) so developers can test the complete `/reset-password?token=...` flow locally.
+- **Local Development (`NODE_ENV !== production`)** — [Ethereal Email](https://ethereal.email) test inbox:
+  - Ethereal is a free fake SMTP service: it accepts mail but never delivers it. No API key is needed.
+  - **Persistent inbox (recommended):** create an account at https://ethereal.email/create (or run `node -e "require('nodemailer').createTestAccount().then(console.log)"` from `apps/api`) and put its credentials in `.env` with `SMTP_HOST=smtp.ethereal.email`, `SMTP_PORT=587`. Log in at https://ethereal.email/login to see every captured email.
+  - **Zero config:** if `SMTP_HOST` is blank, the API creates a throwaway Ethereal account on the first reset request.
+  - Either way, the API logs a `previewUrl` for each reset email; open it to view the message and click the `/reset-password?token=...` link.
+  - To send real mail locally, set `SMTP_*` to a real provider instead.
 
 ## 3. Production Build Steps
 

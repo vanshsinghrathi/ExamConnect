@@ -105,25 +105,27 @@ function AdminHealthContent() {
           <div style={{ marginTop: 8 }}>
             <GenericBadge
               label={
-                data.email.smtpConfigured
+                data.email.mode === "smtp"
                   ? "SMTP Configured"
-                  : data.email.mode === "dev-mailbox"
-                    ? "Local Dev Mailbox"
+                  : data.email.mode === "ethereal"
+                    ? "Ethereal Test Inbox"
                     : "SMTP Unconfigured"
               }
               tone={
-                data.email.smtpConfigured
+                data.email.mode === "smtp"
                   ? "success"
-                  : data.email.mode === "dev-mailbox"
+                  : data.email.mode === "ethereal"
                     ? "info"
                     : "warning"
               }
             />
           </div>
           <p className={styles.fieldHint} style={{ marginTop: 10 }}>
-            {data.email.smtpConfigured
+            {data.email.mode === "smtp"
               ? "Outbound SMTP credentials detected."
-              : "Configure SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM for live email delivery."}
+              : data.email.mode === "ethereal"
+                ? "Emails are captured by Ethereal (ethereal.email) and never delivered. Set SMTP_* to a real provider for live delivery."
+                : "Configure SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM for live email delivery."}
           </p>
         </div>
 

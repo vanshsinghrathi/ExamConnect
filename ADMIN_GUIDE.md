@@ -54,5 +54,5 @@ Sign in at `/` with your admin credentials. The left sidebar automatically revea
 Use `/admin/health` to monitor:
 - PostgreSQL connectivity and live row counts
 - Unverified notification sources requiring administrator review
-- SMTP email configuration status for Forgot Password delivery
+- Email delivery mode for Forgot Password (real SMTP, Ethereal test inbox, or unconfigured)
 - Active session count and API runtime uptime
