@@ -134,6 +134,14 @@ function AdminExamEditorContent() {
   const [savingDl, setSavingDl] = useState(false);
   const [deleteDlTarget, setDeleteDlTarget] = useState<number | null>(null);
 
+  // Edit existing deadline fields
+  const [editingDlId, setEditingDlId] = useState<number | null>(null);
+  const [editDlStart, setEditDlStart] = useState("");
+  const [editDlEnd, setEditDlEnd] = useState("");
+  const [editDlExamDate, setEditDlExamDate] = useState("");
+  const [editDlUrl, setEditDlUrl] = useState("");
+  const [savingEditDl, setSavingEditDl] = useState(false);
+
   async function loadDetail() {
     try {
       setLoading(true);
@@ -341,6 +349,49 @@ function AdminExamEditorContent() {
       });
     } finally {
       setSavingDl(false);
+    }
+  }
+
+  function isoToDateInput(iso: string | null): string {
+    if (!iso) return "";
+    try {
+      return new Date(iso).toISOString().split("T")[0];
+    } catch {
+      return "";
+    }
+  }
+
+  function startEditDeadline(d: AdminExamDetail["deadlines"][number]) {
+    setEditingDlId(d.id);
+    setEditDlStart(isoToDateInput(d.applicationStart));
+    setEditDlEnd(isoToDateInput(d.applicationEnd));
+    setEditDlExamDate(isoToDateInput(d.examDate));
+    setEditDlUrl(d.applicationUrl ?? "");
+  }
+
+  async function handleSaveDeadlineEdit(deadlineId: number) {
+    setFeedback(null);
+    try {
+      setSavingEditDl(true);
+      await apiFetch(`/admin/deadlines/${deadlineId}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          applicationStart: editDlStart ? `${editDlStart}T00:00:00.000Z` : null,
+          applicationEnd: editDlEnd ? `${editDlEnd}T18:29:59.000Z` : null,
+          examDate: editDlExamDate ? `${editDlExamDate}T00:00:00.000Z` : null,
+          applicationUrl: editDlUrl.trim() || null,
+        }),
+      });
+      setEditingDlId(null);
+      setFeedback({ tone: "success", text: "Deadline dates updated successfully." });
+      await loadDetail();
+    } catch (err) {
+      setFeedback({
+        tone: "error",
+        text: err instanceof Error ? err.message : "Failed to update deadline dates.",
+      });
+    } finally {
+      setSavingEditDl(false);
     }
   }
 
@@ -847,11 +898,12 @@ function AdminExamEditorContent() {
               <div className={styles.postHeader}>
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                   <DeadlineStatusBadge status={d.computedStatus} />
-                  <span className={styles.postMeta}>
-                    Start: {formatDate(d.applicationStart)} • End:{" "}
-                    {formatDate(d.applicationEnd)} • Exam:{" "}
-                    {formatDate(d.examDate)}
-                  </span>
+                  {d.postId && (
+                    <GenericBadge
+                      label={`Post #${d.postId}: ${detail.posts.find((p) => p.id === d.postId)?.name ?? "Unknown"}`}
+                      tone="info"
+                    />
+                  )}
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {(["OPEN", "UPCOMING", "NOTIFICATION_AWAITED", "CLOSED"] as const).map(
@@ -877,6 +929,107 @@ function AdminExamEditorContent() {
                   </button>
                 </div>
               </div>
+
+              {/* Warning when OPEN/UPCOMING but no dates */}
+              {(d.computedStatus === "OPEN" || d.computedStatus === "UPCOMING") &&
+                !d.applicationStart &&
+                !d.applicationEnd && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      padding: "8px 12px",
+                      background: "#fef3c7",
+                      border: "1px solid #f59e0b",
+                      borderRadius: 8,
+                      fontSize: 13,
+                      color: "#92400e",
+                      fontWeight: 600,
+                    }}
+                  >
+                    ⚠ This deadline is marked as {d.computedStatus} but has no start/end dates.
+                    Students will see &quot;dates not announced&quot;. Click Edit Dates below to fix.
+                  </div>
+                )}
+
+              {/* Date display / edit */}
+              {editingDlId === d.id ? (
+                <div style={{ marginTop: 10 }}>
+                  <div className={styles.formGrid}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>Application Start Date</label>
+                      <input
+                        type="date"
+                        className={styles.input}
+                        value={editDlStart}
+                        onChange={(e) => setEditDlStart(e.target.value)}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>Application Closing Date</label>
+                      <input
+                        type="date"
+                        className={styles.input}
+                        value={editDlEnd}
+                        onChange={(e) => setEditDlEnd(e.target.value)}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>Exam Date</label>
+                      <input
+                        type="date"
+                        className={styles.input}
+                        value={editDlExamDate}
+                        onChange={(e) => setEditDlExamDate(e.target.value)}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>Apply URL</label>
+                      <input
+                        type="url"
+                        className={styles.input}
+                        value={editDlUrl}
+                        onChange={(e) => setEditDlUrl(e.target.value)}
+                        placeholder="https://..."
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                    <button
+                      type="button"
+                      className={`${styles.btn} ${styles.btnBlue} ${styles.btnSm}`}
+                      disabled={savingEditDl}
+                      onClick={() => handleSaveDeadlineEdit(d.id)}
+                    >
+                      {savingEditDl ? "Saving..." : "Save Dates"}
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+                      onClick={() => setEditingDlId(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ marginTop: 8, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+                  <span className={styles.postMeta}>
+                    Start: <strong>{formatDate(d.applicationStart)}</strong> &bull; End:{" "}
+                    <strong>{formatDate(d.applicationEnd)}</strong> &bull; Exam:{" "}
+                    <strong>{formatDate(d.examDate)}</strong>
+                    {d.applicationUrl && (
+                      <> &bull; <a href={d.applicationUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--blue-600)" }}>Apply Link</a></>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+                    onClick={() => startEditDeadline(d)}
+                  >
+                    ✏️ Edit Dates
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

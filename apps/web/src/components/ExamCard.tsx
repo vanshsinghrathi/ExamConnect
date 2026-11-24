@@ -145,13 +145,21 @@ export function ExamCard({
         <div className={styles.deadlineMeta}>
           {primaryDeadline ? (
             <>
-              <span>
-                Start: <strong>{formatDate(primaryDeadline.applicationStart)}</strong>
-              </span>
-              <span>
-                Last Date:{" "}
-                <strong>{formatDate(primaryDeadline.applicationEnd)}</strong>
-              </span>
+              {!primaryDeadline.applicationStart && !primaryDeadline.applicationEnd ? (
+                <span style={{ color: "var(--amber-700, #b45309)", fontWeight: 600 }}>
+                  ⚠ Application dates not yet announced — status: {grouped.primaryStatus}
+                </span>
+              ) : (
+                <>
+                  <span>
+                    Start: <strong>{formatDate(primaryDeadline.applicationStart)}</strong>
+                  </span>
+                  <span>
+                    Last Date:{" "}
+                    <strong>{formatDate(primaryDeadline.applicationEnd)}</strong>
+                  </span>
+                </>
+              )}
               {primaryDeadline.examDate && (
                 <span>
                   Exam Date: <strong>{formatDate(primaryDeadline.examDate)}</strong>

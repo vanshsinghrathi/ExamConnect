@@ -407,15 +407,25 @@ export default function ExamDetailsPage() {
                         )}
                       </div>
                       <div className={styles.deadlineMeta}>
-                        <span>
-                          Start: <strong>{formatDate(d.applicationStart)}</strong>
-                        </span>
-                        <span>
-                          Closing: <strong>{formatDate(d.applicationEnd)}</strong>
-                        </span>
-                        <span>
-                          Exam Date: <strong>{formatDate(d.examDate)}</strong>
-                        </span>
+                        {!d.applicationStart && !d.applicationEnd ? (
+                          <span style={{ color: "var(--amber-700, #b45309)", fontWeight: 600 }}>
+                            ⚠ Application dates not yet announced
+                          </span>
+                        ) : (
+                          <>
+                            <span>
+                              Start: <strong>{formatDate(d.applicationStart)}</strong>
+                            </span>
+                            <span>
+                              Closing: <strong>{formatDate(d.applicationEnd)}</strong>
+                            </span>
+                          </>
+                        )}
+                        {d.examDate && (
+                          <span>
+                            Exam Date: <strong>{formatDate(d.examDate)}</strong>
+                          </span>
+                        )}
                       </div>
                       {d.status === "CLOSED" && (
                         <p className={styles.fieldHint}>
